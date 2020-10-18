@@ -1,4 +1,5 @@
 import { createPageRoot } from './components/pageRoot';
+import { createLoadingPage } from './pages/loading';
 import { hostEvents, onGuiClose } from "./utils";
 import * as Elementa from 'Elementa/index';
 import Promise from './Promise';
@@ -54,13 +55,25 @@ export const browser = {
    */
   openPage(pagePromise){
     if(!this.isOpen) this.openWindow();
-    Promise.all([this.openingPromise, pagePromise]).then(([_, page]) => {
-      if(!this.isOpen) return; //player closed before load finished
+    this.openingPromise.then(()=>{
+      if(pagePromise.state !== Promise.FULFILLED) this.setPage(createLoadingPage());
+      pagePromise.then(page => {
+        this.setPage(page);
+      })
+    });
+    return this;
+  },
+
+  /**
+   * Only works if the gui is already open
+   * @param {Elementa.UIComponent} page
+   */
+  setPage(page){
+    if(this.isOpen && this.openingPromise.state === Promise.FULFILLED){
       this._triggerWindowChange();
       this.contentRoot.clearChildren();
       this.contentRoot.addChild(page);
-    });
-    return this;
+    }
   },
 
   openWindow(){

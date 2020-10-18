@@ -6,12 +6,12 @@ import * as Elementa from 'Elementa/index';
  */
 let browser;
 /**
- * @type {import('../profile')['createProfile']}
+ * @type {import('../pages/profile')['createProfile']}
  */
 let createProfile;
 setTimeout(() => {
   browser = require('../browser').browser;
-  createProfile = require('./profile').createProfile;
+  createProfile = require('../pages/profile').createProfile;
 }, 0)
 
 /**
