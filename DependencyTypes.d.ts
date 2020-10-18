@@ -5,18 +5,6 @@
 
 interface JavaColor{}
 
-declare module 'Promise/index'{
-  export default class Promise<T>{
-    constructor(resolver: (value: T) => void): this;
-    static all<P>(array: Promise<P>[]): P[];
-    static race<P>(array: Promise<P>[]): P;
-    static resolve<P>(array: P | Promise<P>): Promise<P>;
-    static reject<P>(array: P | Promise<P>): Promise<P>;
-    then<P>(onFulfillment: (value: T) => P, onRejection: (error: T) => P): Promise<P>;
-    catch<P>(onRejection: (error: T) => P): Promise<P>;
-  }
-}
-
 declare module 'Elementa/index'{
   abstract class UIComponent{
     parent: UIComponent;

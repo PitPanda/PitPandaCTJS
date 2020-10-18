@@ -3,7 +3,7 @@ import { createHomePage } from '../components/homePage';
 import { nameParam } from "../utils";
 import { addCustomCompletion } from '../../CustomTabCompletions';
 import { browser } from '../browser';
-import Promise from 'Promise/index';
+import Promise from '../Promise';
 
 const pitPandaCommand = register('command', name => {
   if(!name) browser.openPage(Promise.resolve(createHomePage()));

@@ -1,7 +1,14 @@
 import * as Elementa from 'Elementa/index';
-import Promise from 'Promise/index'
-import request from "../request";
+import request from "./request";
 import { PitPandaURL } from './constants';
+
+/**
+ * @type {import('./browser')['browser']}
+ */
+let browser;
+setTimeout(() => {
+  browser = require('./browser').browser;
+}, 0)
 
 /**
  * No operation
@@ -52,13 +59,24 @@ export const sentenceCase = str => str.charAt(0).toUpperCase() + str.substring(1
  * @returns {void}
  */
 export const onGuiClose = (() => {
-  const waiting = [];
+  let waiting = [];
+  let last = null;
   register('guiOpened', e => {
-    if(e.gui === null)
-      while(waiting.length)
-        waiting.pop()();
+    waiting = waiting.filter(([cb, gui]) => {
+      if(gui === null) {
+        if(e.gui === null){
+          cb();
+          return false;
+        }
+      }else if(last === gui){
+        cb();
+        return false;
+      }
+      return true;
+    })
+    last = e.gui;
   })
-  return cb => waiting.push(cb);
+  return (cb, gui = null) => waiting.push([cb, gui]);
 })()
 
 /**
@@ -67,10 +85,13 @@ export const onGuiClose = (() => {
  */
 export const hostEvents = gui => {
   const windows = [];
-  gui.registerClicked((x,y,b) => windows.forEach(w => w.mouseClick(x,y,b)));
-  gui.registerMouseDragged((x,y,b) => windows.forEach(w => w.mouseDrag(x,y,b)));
-  gui.registerScrolled((x,y,s) => windows.forEach(w => w.mouseScroll(s)));
-  gui.registerMouseReleased((x,y,b) => windows.forEach(w => w.mouseRelease()));
+  const triggers = [
+    gui.registerClicked((x,y,b) => windows.forEach(w => w.mouseClick(x,y,b))),
+    gui.registerMouseDragged((x,y,b) => windows.forEach(w => w.mouseDrag(x,y,b))),
+    gui.registerScrolled((x,y,s) => windows.forEach(w => w.mouseScroll(s))),
+    gui.registerMouseReleased((x,y,b) => windows.forEach(w => w.mouseRelease())),
+  ]
+  onGuiClose(() => triggers.forEach(t => t.unregister()), gui)
   return window => windows.push(window);
 }
 
@@ -90,7 +111,7 @@ export const onDragged = (comp, handler) => {
     });
     registerOnce('guiMouseRelease', () => dragTrigger.unregister());
   });
-  onGuiClose(() => clickRegister.unregister());
+  browser.onBrowserClose(() => clickRegister.unregister())
 }
 
 /**
@@ -121,7 +142,7 @@ export const registerOnce = (type, handler) => {
  * @param {string} str 
  * @param {number} scale 
  */
-export const measureString = (str, scale = 1) => Client.getMinecraft().field_71466_p.func_78256_a(str)*scale // fontRendererObj getStringWidth
+export const measureString = (str) => Client.getMinecraft().field_71466_p.func_78256_a(str) // fontRendererObj getStringWidth
 
 /**
  * Produces a nicely formatted string of the time since a given date in unix epoch seconds
@@ -151,12 +172,3 @@ export const nameParam = args => {
   const last = args[args.length - 1] ?? '';
   return World.getAllPlayers().map(p=>p.getName().toLowerCase()).filter(s=>s.startsWith(last));
 };
-
-/**
- * @template T
- * @param {T} value 
- * @returns {Promise<T>}
- */
-export const wrapInPromise = value => {
-  return new Promise(resolve => resolve(value));
-}

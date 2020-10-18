@@ -1,6 +1,5 @@
 import { timeSince, fetchFromPitPanda } from '../utils';
 import * as Elementa from 'Elementa/index';
-import Promise from 'Promise/index';
 import { createCard, tabbedCard } from './cards';
 import { createProfileDisplay } from './profileDisplay';
 import { ySpacer, xSpacer, createColoredText } from './utility';
@@ -16,6 +15,7 @@ export const createProfile = tag => {
   const root = new Elementa.UIContainer()
     .setHeight(new Elementa.ChildBasedMaxSizeConstraint())
   return fetchFromPitPanda(`/players/${tag}`).then(data => {
+    if(!Client.isInGui()) return;
     if(!data.success){
       console.log(data.error);
       ChatLib.chat(`Error loading profile for ${tag}`)
@@ -92,6 +92,7 @@ export const createProfile = tag => {
         .setWidth(innerRightWidthConstraint)
         .setHeight(new Elementa.ChildBasedSizeConstraint())
       ),
+      ySpacer(2000)
     ].map(c=>c.setY(new Elementa.SiblingConstraint())))
     right.setWidth(new Elementa.ChildBasedMaxSizeConstraint())
 
@@ -118,7 +119,7 @@ export const createStatus = player => {
       createColoredText(`Last seen in The Pit ${timeSince(player.lastSave)} ago`)
         .setY(new Elementa.SiblingConstraint()),
     ]);
-  if(!player.onnline) root.addChild(
+  if(!player.online) root.addChild(
     createColoredText(`Last seen on Hypixel ${timeSince(player.lastSave)} ago`)
       .setY(new Elementa.SiblingConstraint())
   )

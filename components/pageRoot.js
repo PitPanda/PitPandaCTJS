@@ -1,5 +1,5 @@
 import * as Elementa from 'Elementa/index';
-import Promise from 'Promise/index';
+import Promise from '../Promise';
 
 import { createScrollable } from './scrollable';
 
@@ -30,11 +30,10 @@ export const createPageRoot = (window, eventLinker) => {
         .setY(new Elementa.CenterConstraint())
     );
 
-    setTimeout(()=>{
-      const animation = root.makeAnimation();
-      animation.setWidthAnimation(Elementa.Animations.OUT_QUINT, 0.5, (428).pixels())
-      animation.begin();
-      animation.onComplete(()=>resolve(root));
-    }, 0);
+    const time = 0.5;
+    const animation = root.makeAnimation();
+    animation.setWidthAnimation(Elementa.Animations.OUT_QUINT, time, (428).pixels())
+    animation.begin();
+    animation.onComplete(() => resolve(root));
   })
 }

@@ -1,7 +1,33 @@
 import { sentenceCase } from '../utils';
-import { createPlayerList } from './playerName';
+import { createPlayerList, createPlayerName } from './playerName';
 import * as Elementa from 'Elementa/index';
 import { createCard } from './cards';
+
+/**
+ * @param {string} uuid 
+ */
+export const createMainLink = uuid => {
+  const comp = new Elementa.UIContainer()
+    .setHeight(new Elementa.ChildBasedSizeConstraint)
+    .addChildren([
+      new Elementa.UIText('Main:'),
+      createPlayerName(uuid).setY(new Elementa.SiblingConstraint()).setX((5).pixels())
+    ])
+  return comp;
+}
+
+/**
+ * @param {string} uuid 
+ */
+export const createAltsList = uuids => {
+  const comp = new Elementa.UIContainer()
+    .setHeight(new Elementa.ChildBasedSizeConstraint)
+    .addChildren([
+      new Elementa.UIText('Alts:'),
+      createPlayerList(uuids).setY(new Elementa.SiblingConstraint()).setX((5).pixels())
+    ])
+  return comp;
+}
 
 /**
  * @param {any} display 
@@ -22,8 +48,13 @@ export const createPlaque = display => {
       .addChild(description)
     if(display.alts){
       content.addChild(
-        createPlayerList(display.alts)
+        createAltsList(display.alts)
           .setY(new Elementa.SiblingConstraint())
+      )
+    }
+    if(display.main) {
+      content.addChild(
+        createMainLink(display.main).setY(new Elementa.SiblingConstraint())
       )
     }
     return createCard(display.title, content);
@@ -36,8 +67,13 @@ export const createPlaque = display => {
       .addChildren(notes)
     if(display.alts){
       content.addChild(
-        createPlayerList(display.alts)
+        createAltsList(display.alts)
           .setY(new Elementa.SiblingConstraint())
+      )
+    }
+    if(display.main) {
+      content.addChild(
+        createMainLink(display.main).setY(new Elementa.SiblingConstraint())
       )
     }
 

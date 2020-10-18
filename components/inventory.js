@@ -56,7 +56,7 @@ export const createItem = item => {
     if(!item.count) exitShader();
   })
   const scale = 0.9;
-  const textWidth = measureString(item.count+'',scale);
+  const textWidth = measureString(item.count+'')*scale;
   const itemCountEffect = beforeChildrenDrawEffect(() => {
     if(item.count>1) {
       Renderer.translate(0,0,400)
@@ -89,7 +89,7 @@ export const createItem = item => {
     shadowWindow = null;
     effects.remove(drawLoreEffect, hoverBackEffect)
   });
-  
+
   comp.enableEffect(effects);
   return padded;
 }

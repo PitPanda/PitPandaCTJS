@@ -1,7 +1,13 @@
 import { fixColorEncoding, fetchFromPitPanda, addClickEvent } from '../utils';
 import * as Elementa from 'Elementa/index';
 
+/**
+ * @type {import('../browser')['browser']}
+ */
 let browser;
+/**
+ * @type {import('../profile')['createProfile']}
+ */
 let createProfile;
 setTimeout(() => {
   browser = require('../browser').browser;

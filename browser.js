@@ -1,7 +1,7 @@
 import { createPageRoot } from './components/pageRoot';
 import { hostEvents, onGuiClose } from "./utils";
 import * as Elementa from 'Elementa/index';
-import Promise from 'Promise/index';
+import Promise from './Promise';
 
 export const browser = {
   /**
@@ -55,6 +55,8 @@ export const browser = {
   openPage(pagePromise){
     if(!this.isOpen) this.openWindow();
     Promise.all([this.openingPromise, pagePromise]).then(([_, page]) => {
+      if(!this.isOpen) return; //player closed before load finished
+      this._triggerWindowChange();
       this.contentRoot.clearChildren();
       this.contentRoot.addChild(page);
     });
@@ -64,11 +66,11 @@ export const browser = {
   openWindow(){
     if(this.isOpen) return this;
     this.gui = new Gui();
+    this.gui.open();
     this.guiEventLinker = hostEvents(this.gui);
     this.window = new Elementa.Window();
-    
+    this.isOpen = true;
     this.openingPromise = createPageRoot(this.window, this.guiEventLinker).then(root => {
-      this.isOpen = true;
       this.root = root;
       this.header = new Elementa.UIContainer()
         .setWidth(new Elementa.RelativeConstraint(1))
@@ -82,21 +84,57 @@ export const browser = {
         this.contentRoot,
       ]);
     });
-    this.gui.open();
-    this.gui.registerDraw(() => this.window.draw());
-    setTimeout(()=>{
-      onGuiClose(() => {
-        this.isOpen = false;
-        this.gui = null;
-        this.guiEventLinker = null;
-        this.window = null;
-        this.rootPromise = null;
-        this.root = null;
-        this.header = null;
-        this.contentRoot = null;
-      });
-    }, 0)
+    const renderTrigger = this.gui.registerDraw(() => this.window.draw());
+
+    onGuiClose(() => {
+      renderTrigger.unregister();
+      this.isOpen = false;
+      this.gui = null;
+      this.guiEventLinker = null;
+      this.window = null;
+      this.rootPromise = null;
+      this.root = null;
+      this.header = null;
+      this.contentRoot = null;
+      this._triggerBrowserClose();
+      this._triggerWindowChange();
+    }, this.gui);
     
     return this;
+  },
+
+  /**
+   * @type {(() => void)[]}
+   */
+  windowChangeListeners: [],
+
+  /**
+   * Unregisters it self after triggering once
+   * (Also triggers on close)
+   * @param {() => void} callback 
+   */
+  onWindowChange(callback){
+    this.windowChangeListeners.push(callback);
+  },
+
+  _triggerWindowChange(){
+    while(this.windowChangeListeners.length) this.windowChangeListeners.pop()();
+  },
+
+  /**
+   * @type {(() => void)[]}
+   */
+  browserCloseListeners: [],
+
+  /**
+   * Unregisters it self after triggering once
+   * @param {() => void} callback 
+   */
+  onBrowserClose(callback){
+    this.browserCloseListeners.push(callback);
+  },
+
+  _triggerBrowserClose(){
+    while(this.browserCloseListeners.length) this.browserCloseListeners.pop()();
   },
 };

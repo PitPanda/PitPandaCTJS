@@ -17,7 +17,7 @@ export const ySpacer = pixels => new Elementa.UIContainer()
 
 /**
  * @param {Elementa.UIComponent} comp 
- * @param {*} amount 
+ * @param {number} amount 
  * @returns {Elementa.UIContainer}
  */
 export const createPadding = (comp, amount) => {

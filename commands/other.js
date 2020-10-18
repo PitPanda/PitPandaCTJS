@@ -44,3 +44,16 @@ register('command', id => {
     )
   )
 }).setName('gimmie');
+
+const JSLoader = Java.type("com.chattriggers.ctjs.engine.langs.js.JSLoader")
+register('command', () => {
+  let cooldown = 6;
+  (function tick(){
+    const triggers = ReflectionHelper.getPrivateValue(JSLoader, JSLoader, '_', 'triggers');
+    triggers.forEach(trigger => {
+      ChatLib.chat(trigger.toString());
+    })
+    ChatLib.chat(triggers.length.toString());
+    if(cooldown--) setTimeout(tick, 10e3)
+  })()
+}).setName('viewtriggers');
