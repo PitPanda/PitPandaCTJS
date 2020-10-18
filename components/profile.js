@@ -2,10 +2,10 @@ import { timeSince, fetchFromPitPanda } from '../utils';
 import * as Elementa from 'Elementa/index';
 import Promise from 'Promise/index';
 import { createCard, tabbedCard } from './cards';
-import { createProfileDisplay } from './createProfileDisplay';
+import { createProfileDisplay } from './profileDisplay';
 import { ySpacer, xSpacer, createColoredText } from './utility';
-import { createPlaque } from './createPlaque';
-import { createInv } from './createInv';
+import { createPlaque } from './plaque';
+import { createInv } from './inventory';
 
 /**
  * @param {Elementa.UIComponent} root 

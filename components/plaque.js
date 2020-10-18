@@ -1,5 +1,5 @@
 import { sentenceCase } from '../utils';
-import { createPlayerList } from './createPlayerName';
+import { createPlayerList } from './playerName';
 import * as Elementa from 'Elementa/index';
 import { createCard } from './cards';
 

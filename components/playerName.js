@@ -5,7 +5,7 @@ let browser;
 let createProfile;
 setTimeout(() => {
   browser = require('../browser').browser;
-  createProfile = require('./createProfile').createProfile;
+  createProfile = require('./profile').createProfile;
 }, 0)
 
 /**

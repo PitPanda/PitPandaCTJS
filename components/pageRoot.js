@@ -1,7 +1,7 @@
 import * as Elementa from 'Elementa/index';
 import Promise from 'Promise/index';
 
-import { createScrollable } from './createScrollable';
+import { createScrollable } from './scrollable';
 
 const Color = Java.type('java.awt.Color');
 

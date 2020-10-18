@@ -1,4 +1,4 @@
-import { createPageRoot } from './components/createPageRoot';
+import { createPageRoot } from './components/pageRoot';
 import { hostEvents, onGuiClose } from "./utils";
 import * as Elementa from 'Elementa/index';
 import Promise from 'Promise/index';
