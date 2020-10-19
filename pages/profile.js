@@ -5,16 +5,18 @@ import { createProfileDisplay } from '../components/profileDisplay';
 import { ySpacer, xSpacer, createColoredText } from '../components/utility';
 import { createPlaque } from '../components/plaque';
 import { createInv } from '../components/inventory';
+import { createLoadingPage } from './loading';
 
 /**
  * @param {Elementa.UIComponent} root 
  * @param {string} tag 
- * @returns {Promise<Elementa.UIContainer>}
+ * @returns {Elementa.UIContainer}
  */
 export const createProfile = tag => {
   const root = new Elementa.UIContainer()
     .setHeight(new Elementa.ChildBasedMaxSizeConstraint())
-  return fetchFromPitPanda(`/players/${tag}`).then(data => {
+    .addChild(createLoadingPage());
+  fetchFromPitPanda(`/players/${tag}`).then(data => {
     if(!Client.isInGui()) return;
     if(!data.success){
       console.log(data.error);
@@ -92,17 +94,16 @@ export const createProfile = tag => {
         .setWidth(innerRightWidthConstraint)
         .setHeight(new Elementa.ChildBasedSizeConstraint())
       ),
-      ySpacer(2000)
     ].map(c=>c.setY(new Elementa.SiblingConstraint())))
     right.setWidth(new Elementa.ChildBasedMaxSizeConstraint())
 
+    root.clearChildren()
     root.addChildren([left, right]);
-
-    return root;
   }).catch(e => {
     console.log(e.toString());
     ChatLib.chat(`Error loading profile for ${name}`)
   });
+  return root;
 }
 
 /**
@@ -114,7 +115,7 @@ export const createStatus = player => {
     .setWidth((200).pixels())
     .setHeight(new Elementa.ChildBasedSizeConstraint())
     .addChildren([
-      createColoredText(player.onnline ? '§2Online' : '§4Offline')
+      createColoredText(player.online ? '§2Online' : '§4Offline')
         .setY(new Elementa.SiblingConstraint()),
       createColoredText(`Last seen in The Pit ${timeSince(player.lastSave)} ago`)
         .setY(new Elementa.SiblingConstraint()),

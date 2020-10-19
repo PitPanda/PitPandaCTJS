@@ -51,29 +51,17 @@ export const browser = {
   tabs: [],
 
   /**
-   * @param {Promise<Elementa.UIComponent>} page 
+   * @param {Elementa.UIComponent} page 
    */
-  openPage(pagePromise){
+  openPage(page){
     if(!this.isOpen) this.openWindow();
     this.openingPromise.then(()=>{
-      if(pagePromise.state !== Promise.FULFILLED) this.setPage(createLoadingPage());
-      pagePromise.then(page => {
-        this.setPage(page);
-      })
-    });
-    return this;
-  },
-
-  /**
-   * Only works if the gui is already open
-   * @param {Elementa.UIComponent} page
-   */
-  setPage(page){
-    if(this.isOpen && this.openingPromise.state === Promise.FULFILLED){
+      if(!this.isOpen) return;
       this._triggerWindowChange();
       this.contentRoot.clearChildren();
       this.contentRoot.addChild(page);
-    }
+    });
+    return this;
   },
 
   openWindow(){

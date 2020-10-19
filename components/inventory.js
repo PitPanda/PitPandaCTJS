@@ -1,4 +1,4 @@
-import { measureString } from '../utils';
+import { fixColorEncoding, measureString } from '../utils';
 import { exitShader, useShader } from '../shaders';
 import { emptyEffect, beforeChildrenDrawEffect, MetaEffect } from '../effects';
 import * as Elementa from 'Elementa/index';
@@ -33,6 +33,10 @@ export const createInv = (inv, rowSize=9) => {
   return root;
 }
 
+const NBTTagCompound = Java.type('net.minecraft.nbt.NBTTagCompound');
+const NBTTagList = Java.type('net.minecraft.nbt.NBTTagList');
+const NBTTagString = Java.type('net.minecraft.nbt.NBTTagString');
+
 /**
  * warning scissor effect can break the lore
  * @param {any} item object representing the data
@@ -42,11 +46,28 @@ export const createItem = item => {
   const comp = new Elementa.UIContainer()
     .setWidth((16).pixels())
     .setHeight((16).pixels())
+  if(item.desc) item.desc = item.desc.map(fixColorEncoding);
   const padded = createPadding(comp, 1).setX(new Elementa.SiblingConstraint())
   if(item === null || item.id === undefined) return padded;
   if(typeof item.meta === 'string') item.meta = parseInt(item.meta,16) || 0;
   const mcitemtype = MCItem.func_150899_d(item.id); //getItemById
   const itemstack = new ItemStack(mcitemtype, item.count, item.meta);
+  const NBTtag = new NBTTagCompound();
+  const NBTtaglore = new NBTTagCompound();
+  NBTtag.func_74782_a('display', NBTtaglore) //setTag
+  const NBTlore = new NBTTagList();
+  item.desc.forEach(line => {
+    NBTlore.func_74742_a(new NBTTagString(line)); //appendTag
+  });
+  NBTtaglore.func_74782_a('Lore', NBTlore) //setTag
+  itemstack.func_77982_d(NBTtag) //setTagCompoung
+
+  /*
+  if(item.desc && item.desc.some(line => line.includes('Exe'))){
+    Player.getPlayer().field_71071_by.func_70441_a(itemstack) // inventory addItemStackToInventory
+  }
+  */
+
   const ctItem = new Item(itemstack);
   if(item.id >= 298 && item.id <= 301) mcitemtype.func_82813_b(itemstack, item.meta) //setColor
   const lore = createLore(item);
