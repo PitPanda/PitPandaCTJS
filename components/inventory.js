@@ -46,9 +46,14 @@ export const createItem = item => {
   const comp = new Elementa.UIContainer()
     .setWidth((16).pixels())
     .setHeight((16).pixels())
-  if(item.desc) item.desc = item.desc.map(fixColorEncoding);
+  
   const padded = createPadding(comp, 1).setX(new Elementa.SiblingConstraint())
+
   if(item === null || item.id === undefined) return padded;
+
+  item.name = fixColorEncoding(item.name);
+  if(item.desc) item.desc = item.desc.map(fixColorEncoding);
+
   if(typeof item.meta === 'string') item.meta = parseInt(item.meta,16) || 0;
   const mcitemtype = MCItem.func_150899_d(item.id); //getItemById
   const itemstack = new ItemStack(mcitemtype, item.count, item.meta);
@@ -61,9 +66,10 @@ export const createItem = item => {
   });
   NBTtaglore.func_74782_a('Lore', NBTlore) //setTag
   itemstack.func_77982_d(NBTtag) //setTagCompoung
+  itemstack.func_151001_c(item.name) //setStackDisplayName
 
   /*
-  if(item.desc && item.desc.some(line => line.includes('Exe'))){
+  if(item.desc && item.desc.some(line => line.includes('Angel'))){
     Player.getPlayer().field_71071_by.func_70441_a(itemstack) // inventory addItemStackToInventory
   }
   */
