@@ -15,9 +15,9 @@ export const createProfileDisplay = player => {
     .setWidth((200).pixels())
     .setHeight((48).pixels())
     .addChild(createFace(player))
-    .addChild(createColoredText(player.formattedName, 53, 2, 1.1*scale))
-    .addChild(createColoredText('§7Level: '+player.formattedLevel, 53, 14,1.1))
-    .addChild(createColoredText('§7Gold: §6'+player.currentGold+'g', 53, 26,1.1))
+    .addChild(createColoredText((player.formattedName || player.name), 53, 2, 1.1*scale))
+    .addChild(createColoredText('§7Level: '+(player.formattedLevel || player.level), 53, 14,1.1))
+    .addChild(createColoredText('§7Gold: §6'+(player.currentGold || player.gold)+'g', 53, 26,1.1))
     .addChild(createColoredText('§7Played: §f'+formatPlaytime(player.playtime), 53, 38,1.1))
   return createHeadlessCard(root);
 }

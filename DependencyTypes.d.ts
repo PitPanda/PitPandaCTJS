@@ -3,7 +3,12 @@
 
 /// <reference lib="es2015" />
 
-interface JavaColor{}
+interface JavaColor{
+  r: number,
+  g: number,
+  b: number,
+  a: number,
+}
 
 declare module 'Elementa/index'{
   abstract class UIComponent{

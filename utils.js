@@ -2,13 +2,20 @@ import * as Elementa from 'Elementa/index';
 import request from "./request";
 import { PitPandaURL } from './constants';
 
+const Color = Java.type('java.awt.Color');
+
 /**
  * @type {import('./browser')['browser']}
  */
 let browser;
+/**
+ * @type {import('./pages/profile')['createProfile']}
+ */
+let createProfile;
 setTimeout(() => {
   browser = require('./browser').browser;
-}, 0)
+  createProfile = require('./pages/profile').createProfile;
+}, 2);
 
 /**
  * No operation
@@ -172,3 +179,24 @@ export const nameParam = args => {
   const last = args[args.length - 1] ?? '';
   return World.getAllPlayers().map(p=>p.getName().toLowerCase()).filter(s=>s.startsWith(last));
 };
+
+/**
+ * @param {string} tag 
+ */
+export const openProfile = tag => browser.openPage(createProfile(tag));
+
+/**
+ * @param {JavaColor} color 
+ */
+export const colorToLong = color => color.a * 0xFF000000 + color.r * 0xFF0000 + color.g * 0xFF00 + color.b * 0xFF
+
+/**
+ * @param {number} long 
+ * @returns {JavaColor}
+ */
+export const longToColor = long => new Color(
+  (long & 0xFF0000) / 0xFF0000,
+  (long & 0xFF00) / 0xFF00,
+  (long & 0xFF) / 0xFF,
+  (long & 0xFF000000) / 0xFF000000
+);
