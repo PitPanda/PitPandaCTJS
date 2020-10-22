@@ -77,7 +77,8 @@ export const createHomePageContent = (tab, data) => {
     .addChildren([
       new Elementa.UIText('Pit Panda')
         .setTextScale(new Elementa.ScaledTextConstraint(25/81))
-        .setX(new Elementa.CenterConstraint()),
+        .setX(new Elementa.CenterConstraint())
+        .setY((10).pixels()),
       new Elementa.UIText(subtitles[Math.floor(Math.random()*subtitles.length)])
         .setX(new Elementa.CenterConstraint())
         .setY(

@@ -67,7 +67,7 @@ export const browser = {
    * @param {Page} page 
    */
   openPage(page){
-    if(!this.isOpen) this.openWindow(true);
+    if(!this.isOpen) this.openWindow(false);
     this.openingPromise.then(()=>{
       if(!this.isOpen) return;
       const tab = this._createTab(page);
@@ -90,9 +90,9 @@ export const browser = {
   },
 
   /**
-   * @param {boolean} skipInit 
+   * @param {boolean} reOpen 
    */
-  openWindow(skipInit = false){
+  openWindow(reOpen = true){
     if(this.isOpen) return this;
     this.gui = new Gui();
     this.gui.open();
@@ -114,7 +114,14 @@ export const browser = {
       ]);
     });
 
-    if(!skipInit && !this.tabs.length) this.openPage(createHomePage());
+    if(reOpen) {
+      console.log('here1')
+      if(!this.tabs.length) this.openPage(createHomePage());
+      else this.openingPromise.then(() => {
+        if(!this.isOpen) return;
+        this.activeTab[1].select(true);
+      });
+    }
 
     const renderTrigger = this.gui.registerDraw(() => this.window.draw());
 
