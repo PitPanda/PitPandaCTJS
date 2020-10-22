@@ -120,6 +120,7 @@ export const browser = {
       else this.openingPromise.then(() => {
         if(!this.isOpen) return;
         this.activeTab[1].select(true);
+        this.reloadHeader();
       });
     }
 
