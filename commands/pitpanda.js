@@ -1,11 +1,11 @@
-import { createProfile } from '../pages/profile';
+import { createProfilePage } from '../pages/profile';
 import { createHomePage } from '../pages/home';
 import { nameParam } from "../utils";
 import { addCustomCompletion } from '../../CustomTabCompletions';
 import { browser } from '../browser';
 
 const pitPandaCommand = register('command', name => {
-  if(!name) browser.openPage(createHomePage());
-  else browser.openPage(createProfile(name));
+  if(!name) browser.openWindow();
+  else browser.openPage(createProfilePage(name));
 }).setName('pitpanda');
 addCustomCompletion(pitPandaCommand, nameParam);

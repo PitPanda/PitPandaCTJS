@@ -31,23 +31,18 @@ const createPlayerCol = players => {
     .setX(new Elementa.SiblingConstraint())
 }
 
-const createRandomPlayerList = () => {
+const createRandomPlayerList = data => {
   const root = new Elementa.UIContainer()
     .setHeight(new Elementa.ChildBasedMaxSizeConstraint())
-    .setWidth(new Elementa.ChildBasedSizeConstraint())
-  fetchFromPitPanda('/randomplayers').then(data => {
-    if(!data.success){
-      root.clearChildren().addChild(createErrorPage(e.toString()))  
-      return;
-    }
-    
-    root.addChildren([
-      createPlayerCol(data.players.slice(0,5)),
-      createPlayerCol(data.players.slice(5,10)),
-    ])
-  }).catch(e => {
-    root.addChild(createErrorPage(e.toString()))
-  })
+    .setWidth((400).pixels())
+    .setX(new Elementa.CenterConstraint())
+
+  if(!data.success) return root.addChild(createErrorPage(e.toString()))  
+
+  root.addChildren([
+    createPlayerCol(data.players.slice(0,5)),
+    createPlayerCol(data.players.slice(5,10)),
+  ]);
   return root;
 }
 
@@ -57,15 +52,24 @@ const subtitles = [
   'Also try pit.fish',
   'Advanced Remote Administration Control',
   'Advanced Shark Machine',
+  'Totally not a rat',
 ]
 
 /**
- * TODO
+ * @returns {Page}
  */
-export const createHomePage = () => {
+export const createHomePage = () => ({
+  loadingPromise: fetchFromPitPanda('/randomplayers'),
+  async: true,
+  renderer: createHomePageContent,
+});
+
+export const createHomePageContent = (tab, data) => {
+  tab.setName('Home')
   const input = createInput({
     onEnter: openProfile,
     color: theColor,
+    alwaysFocused: true,
   });
   return new Elementa.UIContainer()
     .setHeight(new Elementa.ChildBasedMaxSizeConstraint())
@@ -120,7 +124,7 @@ export const createHomePage = () => {
             (40).pixels()
           )
         ),
-      createRandomPlayerList()
+      createRandomPlayerList(data)
         .setY(
           new Elementa.AdditiveConstraint(
             new Elementa.SiblingConstraint(),

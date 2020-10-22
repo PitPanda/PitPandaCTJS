@@ -1,9 +1,8 @@
 /// <reference no-default-lib="true" />
 /// <reference types="../CTAutocomplete" />
-
 /// <reference lib="es2015" />
 
-interface JavaColor{
+interface JavaColor {
   r: number,
   g: number,
   b: number,

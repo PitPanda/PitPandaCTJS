@@ -1,4 +1,4 @@
-import { fixColorEncoding, fetchFromPitPanda, addClickEvent, openProfile } from '../utils';
+import { fixColorEncoding, fetchFromPitPanda, addClickEvent, openProfile, nameResolve } from '../utils';
 import * as Elementa from 'Elementa/index';
 
 /**
@@ -9,10 +9,9 @@ export const createPlayerName = tag => {
   const comp = new Elementa.UIText('Loading...');
   const handleErr = () => comp.setText(`§4Error`);
   addClickEvent(comp, () => openProfile(tag));
-  fetchFromPitPanda(`/username/${tag}`).then(data => {
-    if(!data.success) handleErr();
-    else comp.setText(fixColorEncoding(data.name));
-  }).catch(handleErr)
+  nameResolve(tag).then(name => {
+    comp.setText(name);
+  }).catch(handleErr);
   return comp;
 }
 

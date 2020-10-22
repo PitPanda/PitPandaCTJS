@@ -1,5 +1,5 @@
 import * as Elementa from 'Elementa/index';
-import { noop } from '../utils';
+import { addClickEvent, noop, registerOnce } from '../utils';
 
 const Color = Java.type('java.awt.Color');
 
@@ -17,6 +17,7 @@ setTimeout(() => {
  * @property {RegExp} allowedChars
  * @property {Elementa.XConstraint} textXConst
  * @property {JavaColor} color
+ * @property {boolean} alwaysFocused
  * @property {(value: string) => void} onEnter
  * @property {(value: string) => void} onChange
  */
@@ -29,6 +30,7 @@ const defaults = {
   allowedChars: /[_a-zA-Z0-9]/,
   textXConst: (2).pixels(),
   color: new Color(0,0,0,0),
+  alwaysFocused: false,
   onEnter: noop,
   onChange: noop,
 }
@@ -49,7 +51,7 @@ export const createInput = (opts = {}) => {
       value => {
         state = value;
         component.clearChildren().addChild(
-          new Elementa.UIText(state)
+          new Elementa.UIText(state || ' ')
             .setY(new Elementa.CenterConstraint())
             .setX(options.textXConst)
         )
@@ -57,17 +59,36 @@ export const createInput = (opts = {}) => {
     ]
   })();
   setState(options.initial);
+  let focused = options.alwaysFocused;
   const prepListener = gui => {
     const listener = gui.registerKeyTyped((char, keyCode) => {
-      if(keyCode === 14) return setState(getState().slice(0,-1))
+      if(!focused) return;
       if(keyCode === 28) return options.onEnter(getState());
-      if(options.allowedChars.test(char)) setState(getState()+(char+''));
-      options.onChange(getState())
+      if(keyCode === 14) {
+        setState(getState().slice(0,-1))
+        options.onChange(getState())
+        return;
+      }
+      if(options.allowedChars.test(char)) {
+        setState(getState()+(char+''));
+        options.onChange(getState())
+      }
     });
     browser.onWindowChange(() => listener.unregister());
   }
   if(!browser.gui) browser.onWindowChange(() => prepListener(browser.gui))
   else prepListener(browser.gui);
+  if(!options.alwaysFocused){
+    addClickEvent(component, () => {
+      console.log('focused')
+      focused = true;
+      const registerExitFocus = () => registerOnce('guiMouseClick', () => {
+        if(component.isHovered()) return registerExitFocus();
+        console.log('unfocused')
+        focused = false;
+      })
+    });
+  }
   return {
     component,
     getState,

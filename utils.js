@@ -1,5 +1,6 @@
 import * as Elementa from 'Elementa/index';
 import request from "./request";
+import Promise from './Promise';
 import { PitPandaURL } from './constants';
 
 const Color = Java.type('java.awt.Color');
@@ -9,12 +10,12 @@ const Color = Java.type('java.awt.Color');
  */
 let browser;
 /**
- * @type {import('./pages/profile')['createProfile']}
+ * @type {import('./pages/profile')['createProfilePage']}
  */
 let createProfile;
 setTimeout(() => {
   browser = require('./browser').browser;
-  createProfile = require('./pages/profile').createProfile;
+  createProfile = require('./pages/profile').createProfilePage;
 }, 2);
 
 /**
@@ -200,3 +201,19 @@ export const longToColor = long => new Color(
   (long & 0xFF) / 0xFF,
   (long & 0xFF000000) / 0xFF000000
 );
+
+const nameCache = new Map();
+/**
+ * @param {string} tag
+ * @returns {Promise<string>}
+ */
+export const nameResolve = tag => new Promise((resolve, reject) => {
+  if(nameCache.has(tag)) return resolve(nameCache.get(tag));
+  fetchFromPitPanda(`/username/${tag}`).then(data => {
+    if(!data.success) reject(data.error);
+    const name = fixColorEncoding(data.name);
+    nameCache.set(tag, name);
+    setTimeout(() => nameCache.delete(tag), 300e3)
+    resolve(name);
+  }).catch(reject);
+});

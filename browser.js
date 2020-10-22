@@ -1,8 +1,16 @@
 import { createPageRoot } from './components/pageRoot';
-import { createLoadingPage } from './pages/loading';
-import { hostEvents, onGuiClose } from "./utils";
+import { createLoadingComponent } from './components/loading';
+import { addClickEvent, colorToLong, hostEvents, onGuiClose } from "./utils";
 import * as Elementa from 'Elementa/index';
 import Promise from './Promise';
+import { createHomePage } from './pages/home'
+import { theColor } from './constants';
+import { outlineEffect } from './effects';
+import { createPadding } from './components/utility';
+
+const Color = Java.type('java.awt.Color');
+
+const white = new Color(1,1,1,0.8);
 
 export const browser = {
   /**
@@ -46,25 +54,45 @@ export const browser = {
   openingPromise: null,
 
   /**
-   * @type {Elementa.UIComponent[]}
+   * @type {Tab[]}
    */
   tabs: [],
 
   /**
-   * @param {Elementa.UIComponent} page 
+   * @type {[number, Tab]}
+   */
+  activeTab: null,
+
+  /**
+   * @param {Page} page 
    */
   openPage(page){
-    if(!this.isOpen) this.openWindow();
+    if(!this.isOpen) this.openWindow(true);
     this.openingPromise.then(()=>{
       if(!this.isOpen) return;
-      this._triggerWindowChange();
-      this.contentRoot.clearChildren();
-      this.contentRoot.addChild(page);
+      const tab = this._createTab(page);
+      this.tabs.push(tab);
+      tab.select(true);
+      this.reloadHeader();
     });
     return this;
   },
 
-  openWindow(){
+  /**
+   * @param {number} index 
+   */
+  setPage(index){
+    if(!this.tabs[index]) throw new Error('Invalid tab index!');
+    const tab = this.tabs[index];
+    tab.select();
+    this.reloadHeader();
+    return this;
+  },
+
+  /**
+   * @param {boolean} skipInit 
+   */
+  openWindow(skipInit = false){
     if(this.isOpen) return this;
     this.gui = new Gui();
     this.gui.open();
@@ -75,7 +103,7 @@ export const browser = {
       this.root = root;
       this.header = new Elementa.UIContainer()
         .setWidth(new Elementa.RelativeConstraint(1))
-        .setHeight((28).pixels());
+        .setHeight((28).pixels())
       this.contentRoot = new Elementa.UIContainer()
         .setWidth(new Elementa.RelativeConstraint(1))
         .setHeight(new Elementa.ChildBasedMaxSizeConstraint())
@@ -85,6 +113,9 @@ export const browser = {
         this.contentRoot,
       ]);
     });
+
+    if(!skipInit && !this.tabs.length) this.openPage(createHomePage());
+
     const renderTrigger = this.gui.registerDraw(() => this.window.draw());
 
     onGuiClose(() => {
@@ -138,4 +169,99 @@ export const browser = {
   _triggerBrowserClose(){
     while(this.browserCloseListeners.length) this.browserCloseListeners.pop()();
   },
+
+  reloadHeader(){
+    if(!this.isOpen) return;
+    this.header.clearChildren().addChildren(this.tabs.map(t=>t.component));
+  },
+
+  /**
+   * @param {Page} page
+   * @returns {Tab}
+   */
+  _createTab(page){
+    const that = this;
+    let name = 'New Tab';
+    const genNameComp = () => new Elementa.UIText(name)
+      .setX((4).pixels())
+      .setY(new Elementa.CenterConstraint());
+      
+    const exitButton = new Elementa.UIText('X')
+      .setX(new Elementa.AdditiveConstraint(
+        new Elementa.SiblingConstraint(),
+        (4).pixels(),
+      ))
+      .setY(new Elementa.CenterConstraint())
+
+    const component = new Elementa.UIBlock(theColor)
+      .setHeight((20).pixels())
+      .setWidth(
+        new Elementa.AdditiveConstraint(
+          new Elementa.ChildBasedSizeConstraint(),
+          (12).pixels(),
+        )
+      )
+      .enableEffect(outlineEffect(white ,1))
+      .addChildren([
+        genNameComp(),
+        exitButton,
+      ]);
+    const tab = {
+      page: page,
+      getName(){
+        return name;
+      },
+      setName(newName){
+        name = newName;
+        component.clearChildren().addChildren([
+          genNameComp(),
+          exitButton,
+        ])
+      },
+      getIndex(){
+        return that.tabs.indexOf(this);
+      },
+      component: createPadding(component, 4)
+        .setX(new Elementa.SiblingConstraint()),
+      select(force = false) {
+        const newIndex = this.getIndex();
+        if(!force && newIndex === that.activeTab[0]) return;
+        that.activeTab = [newIndex, this];
+        that._triggerWindowChange();
+        const page = this.page;
+        if(page.async){
+          this.setName('Loading')
+          that.contentRoot.clearChildren();
+          that.contentRoot.addChild((page.loadingRenderer || createLoadingComponent)());
+          page.loadingPromise.then(data => {
+            if(!that.isOpen || that.activeTab[1] !== this) return;
+            that.contentRoot.clearChildren();
+            that.contentRoot.addChild(page.renderer(this, data));
+          })
+        }else{
+          that.contentRoot.clearChildren();
+          that.contentRoot.addChild(page.renderer(this));
+        }
+      },
+      close(){
+        const oldIndex = that.activeTab[0];
+        const thisIndex = this.getIndex();
+        that.tabs = that.tabs.filter(t => t !== this);
+        if(that.tabs.length === 0){
+          that.openPage(createHomePage());
+        }else{
+          if(thisIndex === oldIndex){
+            if(that.tabs[oldIndex-1]) that.tabs[oldIndex-1].select();
+            else that.tabs[0].select();
+          }
+        }
+        that.reloadHeader();
+      }
+    }
+    addClickEvent(component, () => {
+      if(exitButton.isHovered()) tab.close();
+      else tab.select();
+    });
+    return tab;
+  }
 };
