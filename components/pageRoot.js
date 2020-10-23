@@ -20,7 +20,7 @@ export const createPageRoot = (window, eventLinker) => {
             new Elementa.ChildBasedMaxSizeConstraint(),
             (120).pixels()
           ),
-          window.getHeight().pixels()
+          new Elementa.RelativeConstraint(1)
         )
       )
     

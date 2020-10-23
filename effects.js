@@ -79,17 +79,17 @@ export class MetaEffect {
  * @param {(comp: Elementa.UIComponent) => void} fn 
  * @returns {Elementa.Effect}
  */
-export const beforeDrawEffect = fn => ({...emptyEffect,beforeDraw:fn});
+export const beforeDrawEffect = fn => ({...emptyEffect, beforeDraw:fn});
 /**
  * @param {(comp: Elementa.UIComponent) => void} fn 
  * @returns {Elementa.Effect}
  */
-export const beforeChildrenDrawEffect = fn => ({...emptyEffect,beforeChildrenDraw:fn});
+export const beforeChildrenDrawEffect = fn => ({...emptyEffect, beforeChildrenDraw:fn});
 /**
  * @param {(comp: Elementa.UIComponent) => void} fn 
  * @returns {Elementa.Effect}
  */
-export const afterDrawEffect = fn => ({...emptyEffect,afterDraw:fn});
+export const afterDrawEffect = fn => ({...emptyEffect, afterDraw:fn});
 
 /**
  * @param {JavaColor} color
@@ -110,4 +110,14 @@ export const outlineEffect = (color, width) => {
   });
 }
 
+/**
+ * @param {JavaColor} color
+ * @returns {Elementa.Effect}
+ */
+export const backgroundEffect = color => {
+  const clr = Renderer.color(color.red,color.green,color.blue,color.alpha);
+  return beforeDrawEffect(comp => {
+    Renderer.drawRect(clr, comp.getLeft(), comp.getTop(), comp.getWidth(), comp.getHeight())
+  });
+}
 

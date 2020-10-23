@@ -1,15 +1,12 @@
 import * as Elementa from 'Elementa/index';
-import { addClickEvent, colorToLong, fetchFromPitPanda, openProfile } from '../utils';
+import { addClickEvent, fetchFromPitPanda, noop, openProfile } from '../../utils';
 import { createErrorPage } from './error';
-import { createProfileDisplay } from '../components/profileDisplay';
-import { outlineEffect } from '../effects';
-import { createInput } from '../components/input';
-import { theColor } from '../constants';
-
-const Color = Java.type('java.awt.Color');
-
-const white = new Color(1,1,1,0.8);
-const longWhite = colorToLong(white);
+import { createProfileDisplay } from '../profileDisplay';
+import { outlineEffect } from '../../effects';
+import { createInput } from '../input';
+import { logo, theColor, white } from '../../constants';
+import { createPadding } from '../utility';
+import { createBasicTab } from '../tabs/basic';
 
 /**
  * @param {any[]} players 
@@ -28,6 +25,7 @@ const createPlayerCol = players => {
         )
     )
     .setWidth(new Elementa.ChildBasedMaxSizeConstraint())
+    .setHeight(new Elementa.ChildBasedSizeConstraint())
     .setX(new Elementa.SiblingConstraint())
 }
 
@@ -62,10 +60,47 @@ export const createHomePage = () => ({
   loadingPromise: fetchFromPitPanda('/randomplayers'),
   async: true,
   renderer: createHomePageContent,
+  tabComponentHandler: tabController,
 });
 
+/**
+ * @param {Tab} tab 
+ * @param {TabComponentHandlerOptions} options
+ * @returns {TabComponentHandler}
+ */
+const tabController = (tab, options) => {
+  const component = createPadding(
+      new Elementa.UIRoundedRectangle(5)
+        .addChild(
+          new Elementa.UIImage.ofFile(logo)
+            .setHeight((18).pixels())
+            .setWidth((18).pixels())
+            .setX(new Elementa.CenterConstraint())
+            .setY(new Elementa.CenterConstraint())
+        )
+        .setWidth((22).pixels())
+        .setHeight((22).pixels())
+        .setColor(new Elementa.ConstantColorConstraint(white)),
+      3
+    )
+  
+  addClickEvent(component, () => {
+    options.onClick();
+  });
+
+  return {
+    component,
+    update: noop,
+    focused: noop,
+    unfocused: noop,
+  }
+}
+
+/**
+ * @param {Tab} tab 
+ * @param {any} data 
+ */
 export const createHomePageContent = (tab, data) => {
-  tab.setName('Home')
   const input = createInput({
     onEnter: openProfile,
     color: theColor,
@@ -110,7 +145,7 @@ export const createHomePageContent = (tab, data) => {
                   .setY(new Elementa.CenterConstraint())
               )
             addClickEvent(comp, b => {
-              openProfile(input.getValue())
+              openProfile(input.getState())
             })
             return comp;
           })()

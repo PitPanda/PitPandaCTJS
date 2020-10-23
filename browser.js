@@ -1,16 +1,9 @@
 import { createPageRoot } from './components/pageRoot';
 import { createLoadingComponent } from './components/loading';
-import { addClickEvent, colorToLong, hostEvents, onGuiClose } from "./utils";
+import { hostEvents, onGuiClose } from "./utils";
 import * as Elementa from 'Elementa/index';
 import Promise from './Promise';
-import { createHomePage } from './pages/home'
-import { theColor } from './constants';
-import { outlineEffect } from './effects';
-import { createPadding } from './components/utility';
-
-const Color = Java.type('java.awt.Color');
-
-const white = new Color(1,1,1,0.8);
+import { createHomePage } from './components/pages/home'
 
 export const browser = {
   /**
@@ -114,10 +107,13 @@ export const browser = {
       ]);
     });
 
+    if(!this.tabs.length) {
+      const newTab = this._createTab(createHomePage())
+      this.activeTab = [0, newTab]
+      this.tabs.push(newTab);
+    }
     if(reOpen) {
-      console.log('here1')
-      if(!this.tabs.length) this.openPage(createHomePage());
-      else this.openingPromise.then(() => {
+      this.openingPromise.then(() => {
         if(!this.isOpen) return;
         this.activeTab[1].select(true);
         this.reloadHeader();
@@ -180,7 +176,7 @@ export const browser = {
 
   reloadHeader(){
     if(!this.isOpen) return;
-    this.header.clearChildren().addChildren(this.tabs.map(t=>t.component));
+    this.header.clearChildren().addChildren(this.tabs.map(t=>t.componentHandler.component));
   },
 
   /**
@@ -190,30 +186,9 @@ export const browser = {
   _createTab(page){
     const that = this;
     let name = 'New Tab';
-    const genNameComp = () => new Elementa.UIText(name)
-      .setX((4).pixels())
-      .setY(new Elementa.CenterConstraint());
-      
-    const exitButton = new Elementa.UIText('X')
-      .setX(new Elementa.AdditiveConstraint(
-        new Elementa.SiblingConstraint(),
-        (4).pixels(),
-      ))
-      .setY(new Elementa.CenterConstraint())
-
-    const component = new Elementa.UIBlock(theColor)
-      .setHeight((20).pixels())
-      .setWidth(
-        new Elementa.AdditiveConstraint(
-          new Elementa.ChildBasedSizeConstraint(),
-          (12).pixels(),
-        )
-      )
-      .enableEffect(outlineEffect(white ,1))
-      .addChildren([
-        genNameComp(),
-        exitButton,
-      ]);
+    /**
+     * @type {Tab}
+     */
     const tab = {
       page: page,
       getName(){
@@ -221,19 +196,18 @@ export const browser = {
       },
       setName(newName){
         name = newName;
-        component.clearChildren().addChildren([
-          genNameComp(),
-          exitButton,
-        ])
+        this.componentHandler.update();
       },
       getIndex(){
         return that.tabs.indexOf(this);
       },
-      component: createPadding(component, 4)
-        .setX(new Elementa.SiblingConstraint()),
       select(force = false) {
         const newIndex = this.getIndex();
-        if(!force && newIndex === that.activeTab[0]) return;
+        if(!force && this === that.activeTab[1]) return;
+        if(this !== that.activeTab[1]) {
+          that.activeTab[1].componentHandler.unfocused();
+          this.componentHandler.focused();
+        }
         that.activeTab = [newIndex, this];
         that._triggerWindowChange();
         const page = this.page;
@@ -259,17 +233,17 @@ export const browser = {
           that.openPage(createHomePage());
         }else{
           if(thisIndex === oldIndex){
-            if(that.tabs[oldIndex-1]) that.tabs[oldIndex-1].select();
-            else that.tabs[0].select();
+            if(that.tabs[oldIndex]) that.tabs[oldIndex].select();
+            else that.tabs[oldIndex-1].select();
           }
         }
         that.reloadHeader();
       }
     }
-    addClickEvent(component, () => {
-      if(exitButton.isHovered()) tab.close();
-      else tab.select();
-    });
+    tab.componentHandler = page.tabComponentHandler(tab, {
+      onClick: () => tab.select(),
+      onExit: () => tab.close(),
+    })
     return tab;
   }
 };

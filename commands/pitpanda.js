@@ -1,5 +1,5 @@
-import { createProfilePage } from '../pages/profile';
-import { createHomePage } from '../pages/home';
+import { createProfilePage } from '../components/pages/profile';
+import { createHomePage } from '../components/pages/home';
 import { nameParam } from "../utils";
 import { addCustomCompletion } from '../../CustomTabCompletions';
 import { browser } from '../browser';

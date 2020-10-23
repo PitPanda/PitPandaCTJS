@@ -1,11 +1,12 @@
-import { timeSince, fetchFromPitPanda } from '../utils';
+import { timeSince, fetchFromPitPanda } from '../../utils';
 import * as Elementa from 'Elementa/index';
-import { createCard, tabbedCard } from '../components/cards';
-import { createProfileDisplay } from '../components/profileDisplay';
-import { ySpacer, xSpacer, createColoredText } from '../components/utility';
-import { createPlaque } from '../components/plaque';
-import { createInv } from '../components/inventory';
-import { createLoadingComponent } from '../components/loading';
+import { createCard, tabbedCard } from '../cards';
+import { createProfileDisplay } from '../profileDisplay';
+import { ySpacer, xSpacer, createColoredText } from '../utility';
+import { createPlaque } from '../plaque';
+import { createInv } from '../inventory';
+import { createLoadingComponent } from '../loading';
+import { createBasicTab } from '../tabs/basic';
 
 const profileRender = (tab, data) => {
   if(!Client.isInGui()) return;
@@ -104,6 +105,7 @@ export const createProfilePage = tag => ({
   async: true,
   loadingPromise: fetchFromPitPanda(`/players/${tag}`),
   renderer: profileRender,
+  tabComponentHandler: createBasicTab
 });
 
 /**

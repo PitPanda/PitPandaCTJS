@@ -11,8 +11,9 @@ const Color = Java.type('java.awt.Color');
  */
 export const createScrollable = (comp, eventLinker) => {
   let scrollPos = 0;
-  const maxScrollPos = () => root.getHeight() - 24;
-  const scaledMaxScroll = () => comp.getHeight() - maxScrollPos() - 24;
+  let scrollSize = 0;
+  const maxScrollPos = () => root.getHeight() - scrollSize;
+  const scaledMaxScroll = () => comp.getHeight() - maxScrollPos() - scrollSize;
   const isEnabled = () => scaledMaxScroll() > 0;
   const scaleRatio = () => maxScrollPos()/scaledMaxScroll();
   const floatingWindow = new Elementa.Window();
@@ -21,14 +22,18 @@ export const createScrollable = (comp, eventLinker) => {
     .setWidth(new Elementa.ChildBasedSizeConstraint())
     .setHeight(new Elementa.RelativeConstraint(1))
     .enableEffect(beforeDrawEffect(() => {
-      comp.setY((-1*(scrollPos/maxScrollPos()*scaledMaxScroll())).pixels())
-      scrollBar.setY(scrollPos.pixels())
-      if(isEnabled()) floatingWindow.draw();
+      if(isEnabled()) {
+        comp.setY((-1*(scrollPos/maxScrollPos()*scaledMaxScroll())).pixels())
+        scrollBar.setY(scrollPos.pixels())
+        floatingWindow.draw()
+        scrollSize = root.getHeight()**2/comp.getHeight();
+        scrollBar.setHeight(scrollSize.pixels())
+      };
     }))
     .addChild(comp)
   const scrollBar = new Elementa.UIBlock(new Color(.9,.9,.9,.7))
     .setWidth((6).pixels())
-    .setHeight((24).pixels())
+    .setHeight((0).pixels())
     .enableEffect(beforeDrawEffect(() => {
       scrollBar.setX(root.getRight().pixels());
       scrollBar.setY(scrollPos.pixels());

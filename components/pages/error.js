@@ -1,4 +1,5 @@
 import * as Elementa from 'Elementa/index';
+import { createBasicTab } from '../tabs/basic';
 
 /**
  * TODO
@@ -19,4 +20,5 @@ export const createErrorPageContent = reason => {
 export const createErrorPage = reason => ({
   async: false,
   renderer: () => createErrorPageContent(reason),
+  tabComponentHandler: createBasicTab,
 })

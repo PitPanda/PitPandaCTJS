@@ -39,6 +39,8 @@ declare module 'Elementa/index'{
     isHovered(): boolean;
     draw(): void;
     makeAnimation(): AnimatingConstraints;
+    onMouseEnter(cb: () => void): this;
+    onMouseLeave(cb: () => void): this;
   }
 
   class UIConstraints{

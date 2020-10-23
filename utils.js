@@ -10,12 +10,12 @@ const Color = Java.type('java.awt.Color');
  */
 let browser;
 /**
- * @type {import('./pages/profile')['createProfilePage']}
+ * @type {import('./components/pages/profile')['createProfilePage']}
  */
 let createProfile;
 setTimeout(() => {
   browser = require('./browser').browser;
-  createProfile = require('./pages/profile').createProfilePage;
+  createProfile = require('./components/pages/profile').createProfilePage;
 }, 2);
 
 /**
