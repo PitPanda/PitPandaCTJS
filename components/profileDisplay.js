@@ -8,9 +8,9 @@ import * as Elementa from 'Elementa/index';
  * @returns {Elementa.UIContainer}
  */
 export const createProfileDisplay = player => {
-  const nameLen = measureString(player.formattedName);
+  const nameLen = measureString(player.formattedName || player.name);
   let scale = 1;
-  if(nameLen > 125) scale = 125/nameLen;
+  if(nameLen > 142) scale = 142/nameLen;
   const root = new Elementa.UIContainer()
     .setWidth((200).pixels())
     .setHeight((48).pixels())
@@ -29,7 +29,7 @@ export const createProfileDisplay = player => {
  */
 export const createFace = (player, size=48) => {
   const img = Elementa.UIImage.ofURL(new java.net.URL(`https://crafatar.com/avatars/${player.uuid}?overlay=true`))
-  img.setWidth(size.pixels(true));
-  img.setHeight(size.pixels(true));
+  img.setWidth(size.pixels());
+  img.setHeight(size.pixels());
   return img;
 }

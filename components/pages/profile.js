@@ -1,35 +1,53 @@
-import { timeSince, fetchFromPitPanda } from '../../utils';
+import { timeSince, fetchFromPitPanda, addClickEvent } from '../../utils';
 import * as Elementa from 'Elementa/index';
-import { createCard, tabbedCard } from '../cards';
+import { createCard, createHeadlessCard, tabbedCard } from '../cards';
 import { createProfileDisplay } from '../profileDisplay';
 import { ySpacer, xSpacer, createColoredText } from '../utility';
 import { createPlaque } from '../plaque';
 import { createInv } from '../inventory';
-import { createLoadingComponent } from '../loading';
 import { createBasicTab } from '../tabs/basic';
 
+/**
+ * @param {Tab} tab 
+ * @param {any} data 
+ */
 const profileRender = (tab, data) => {
-  if(!Client.isInGui()) return;
-  if(!data.success){
-    console.log(data.error);
-    ChatLib.chat(`Error loading profile for ${tag}`)
-    return;
-  }
   const player = data.data;
 
   tab.setName(player.name);
+  tab.page.ids.push(player.uuid);
   
   const left = new Elementa.UIContainer()
     .setX((5).pixels())
     .setHeight(new Elementa.ChildBasedSizeConstraint())
 
   const face = createProfileDisplay(player)
-    .setY(new Elementa.SiblingConstraint())
+
+
+  const tradePrompt = [];
+  if(World.getAllPlayers().some( p=> 
+    p.getUUID().toString().replace(/-/g,'') === player.uuid &&
+    p.getUUID().toString() !== Player.getUUID().toString()
+  )) {
+    const comp = createHeadlessCard(
+      new Elementa.UIContainer()
+        .addChild(new Elementa.UIText('Send trade request'))
+        .setWidth((200).pixels())
+        .setHeight(new Elementa.ChildBasedSizeConstraint())
+    )
+    addClickEvent(comp, () => {
+      ChatLib.command(`trade ${player.name}`)
+    })
+    tradePrompt.push(comp);
+  }
 
   const displays = player.displays.map(d=>createPlaque(d));
 
+  
+
   const leftChildren = [
     face,
+    ...tradePrompt,
     ...displays,
     createCard('Status', createStatus(player)),
   ]
@@ -37,10 +55,13 @@ const profileRender = (tab, data) => {
     c.setY(new Elementa.SiblingConstraint())
     left.addChild(c);
   });
-  left.setWidth(Math.max(...leftChildren.map(c=>c.getWidth()+8)).pixels())
+  left.setWidth(new Elementa.ChildBasedMaxSizeConstraint())
 
   const right = new Elementa.UIContainer()
-    .setX(new Elementa.SiblingConstraint())
+    .setX(new Elementa.AdditiveConstraint(
+      new Elementa.SiblingConstraint(),
+      (8).pixels()
+    ))
     .setHeight(new Elementa.ChildBasedSizeConstraint())
   
   const innerRightWidthConstraint = (185).pixels();
@@ -105,7 +126,8 @@ export const createProfilePage = tag => ({
   async: true,
   loadingPromise: fetchFromPitPanda(`/players/${tag}`),
   renderer: profileRender,
-  tabComponentHandler: createBasicTab
+  tabComponentHandler: createBasicTab,
+  ids: [tag.toLowerCase()],
 });
 
 /**

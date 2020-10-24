@@ -3,10 +3,9 @@ import { addClickEvent, fetchFromPitPanda, noop, openProfile } from '../../utils
 import { createErrorPage } from './error';
 import { createProfileDisplay } from '../profileDisplay';
 import { outlineEffect } from '../../effects';
-import { createInput } from '../input';
+import { createInput } from '../inputs/text';
 import { logo, theColor, white } from '../../constants';
 import { createPadding } from '../utility';
-import { createBasicTab } from '../tabs/basic';
 
 /**
  * @param {any[]} players 
@@ -61,6 +60,7 @@ export const createHomePage = () => ({
   async: true,
   renderer: createHomePageContent,
   tabComponentHandler: tabController,
+  ids: ['home'],
 });
 
 /**

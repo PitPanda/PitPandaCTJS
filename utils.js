@@ -2,6 +2,7 @@ import * as Elementa from 'Elementa/index';
 import request from "./request";
 import Promise from './Promise';
 import { PitPandaURL } from './constants';
+import { addCustomCompletion } from '../CustomTabCompletions';
 
 const Color = Java.type('java.awt.Color');
 
@@ -43,7 +44,10 @@ export const fetchFromPitPanda = path => request({
   headers: {
       'User-Agent': 'PitPandaMinecraft',
   },
-})
+}).then(data => new Promise((resolve, reject) => {
+  if(!data.success) return reject(data.error);
+  resolve(data);
+}))
 
 /**
  * ex: 123 -> "2h 3m"
@@ -217,3 +221,43 @@ export const nameResolve = tag => new Promise((resolve, reject) => {
     resolve(name);
   }).catch(reject);
 });
+
+/**
+ * this is prone to reject. (rejects undefined)
+ * max wait is 5s
+ * this will reject outside of pit but it may resolve weird values too
+ * @returns {Promise<string>}
+ */
+export const getMap = () => new Promise((resolve, reject) => {
+  let timedout = false;
+  setTimeout(() => {
+    timedout = true;
+    reject();
+  }, 5e3);
+  let limit = 5;
+  const trigger = register('chat', (message, event) => {
+    if(timedout) return trigger.unregister();
+    const matches = message.match(/You are currently playing on (.*)/);
+    if(!matches) {
+      limit--;
+      if(!limit) trigger.unregister();
+      return reject();
+    };
+    resolve(matches[1])
+    event.setCanceled(true);
+    trigger.unregister();
+  }).setCriteria("${message}");
+  ChatLib.command('map');
+});
+
+/**
+ * @param {string[]} aliases 
+ * @param {(args: string[]) => void} implementation 
+ * @param {(args: string[]) => string[]} completer 
+ */
+export const registerCommandWithAliases = (aliases, implementation, completer) => {
+  for(let alias of aliases){
+    const cmd = register('command', implementation).setName(alias);
+    if(completer) addCustomCompletion(cmd, completer);
+  }
+}

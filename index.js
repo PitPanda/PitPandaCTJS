@@ -5,3 +5,4 @@
 
 import './commands/pitpanda';
 import './commands/other';
+import './settings';

@@ -1,14 +1,14 @@
 import * as Elementa from 'Elementa/index';
-import { addClickEvent, noop, registerOnce } from '../utils';
+import { addClickEvent, noop, registerOnce } from '../../utils';
 
 const Color = Java.type('java.awt.Color');
 
 /**
- * @type {import('../browser')['browser']}
+ * @type {import('../../browser')['browser']}
  */
 let browser;
 setTimeout(() => {
-  browser = require('../browser').browser;
+  browser = require('../../browser').browser;
 }, 2);
 
 /**
@@ -60,12 +60,19 @@ export const createInput = (opts = {}) => {
   })();
   setState(options.initial);
   let focused = options.alwaysFocused;
+  /**
+   * @param {Gui} gui 
+   */
   const prepListener = gui => {
     const listener = gui.registerKeyTyped((char, keyCode) => {
       if(!focused) return;
       if(keyCode === 28) return options.onEnter(getState());
       if(keyCode === 14) {
-        setState(getState().slice(0,-1))
+        if(gui.isControlDown()){
+          setState('')
+        }else{
+          setState(getState().slice(0,-1))
+        }
         options.onChange(getState())
         return;
       }
@@ -80,11 +87,9 @@ export const createInput = (opts = {}) => {
   else prepListener(browser.gui);
   if(!options.alwaysFocused){
     addClickEvent(component, () => {
-      console.log('focused')
       focused = true;
       const registerExitFocus = () => registerOnce('guiMouseClick', () => {
         if(component.isHovered()) return registerExitFocus();
-        console.log('unfocused')
         focused = false;
       })
     });

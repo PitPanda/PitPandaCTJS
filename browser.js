@@ -4,6 +4,7 @@ import { hostEvents, onGuiClose } from "./utils";
 import * as Elementa from 'Elementa/index';
 import Promise from './Promise';
 import { createHomePage } from './components/pages/home'
+import { createErrorPage } from './components/pages/error';
 
 export const browser = {
   /**
@@ -63,22 +64,16 @@ export const browser = {
     if(!this.isOpen) this.openWindow(false);
     this.openingPromise.then(()=>{
       if(!this.isOpen) return;
-      const tab = this._createTab(page);
-      this.tabs.push(tab);
-      tab.select(true);
+      const existingTab = this.findTabByIds(page.ids);
+      if(existingTab){
+        existingTab.select(true);
+      }else{
+        const tab = this._createTab(page);
+        this.tabs.push(tab);
+        tab.select(true);
+      }
       this.reloadHeader();
     });
-    return this;
-  },
-
-  /**
-   * @param {number} index 
-   */
-  setPage(index){
-    if(!this.tabs[index]) throw new Error('Invalid tab index!');
-    const tab = this.tabs[index];
-    tab.select();
-    this.reloadHeader();
     return this;
   },
 
@@ -180,6 +175,14 @@ export const browser = {
   },
 
   /**
+   * @param {string[]} ids
+   * @returns {Tab | undefined}
+   */
+  findTabByIds(ids){
+    return this.tabs.find(tab => ids.some(id => tab.page.ids.includes(id)))
+  },
+
+  /**
    * @param {Page} page
    * @returns {Tab}
    */
@@ -214,12 +217,18 @@ export const browser = {
         if(page.async){
           this.setName('Loading')
           that.contentRoot.clearChildren();
-          that.contentRoot.addChild((page.loadingRenderer || createLoadingComponent)());
+          const [initLoader, cleanupLoader] = (page.loadingRenderer || createLoadingComponent)();
+          that.contentRoot.addChild(initLoader());
           page.loadingPromise.then(data => {
+            cleanupLoader();
             if(!that.isOpen || that.activeTab[1] !== this) return;
-            that.contentRoot.clearChildren();
-            that.contentRoot.addChild(page.renderer(this, data));
-          })
+            that.contentRoot.clearChildren().addChild(page.renderer(this, data));
+          }).catch(error => {
+            cleanupLoader();
+            if(!that.isOpen || that.activeTab[1] !== this) return;
+            const reason = 'error' in error ? error.error : error.toString();
+            that.contentRoot.clearChildren().addChild(createErrorPage(reason).renderer(this));
+          });
         }else{
           that.contentRoot.clearChildren();
           that.contentRoot.addChild(page.renderer(this));

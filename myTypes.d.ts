@@ -5,6 +5,12 @@
 import * as Elementa from 'Elementa/index';
 
 declare global {
+  /**
+   * First is method to call when component is initialized. 
+   * Second is to be called on cleanup.
+   */
+  type DelicateComponent = [() => Elementa.UIContainer, () => void];
+
   type TabComponentHandlerOptions = {
     onClick: () => void;
     onExit: () => void;
@@ -30,8 +36,9 @@ declare global {
     async: boolean;
     tabComponentHandler: (tab: Tab, options: TabComponentHandlerOptions) => TabComponentHandler;
     loadingPromise?: Promise<any>;
-    loadingRenderer?: () => Elementa.UIComponent;
+    loadingRenderer?: () => DelicateComponent;
     renderer: (tab: Tab, data?: any) => Elementa.UIComponent;
+    ids: string[];
   }
 }
 

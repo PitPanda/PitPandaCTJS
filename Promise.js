@@ -94,7 +94,7 @@ class Promise{
       this.state = newState;
 
       // Log all promise rejection values (hopefully temporary but helps for debugging)
-      if(this.state === Promise.REJECTED) console.error(value.toString());
+      if(this.state === Promise.REJECTED) console.log(value.toString());
 
       this.dispatchHandlers = makeDispatcher( ( this.state === Promise.FULFILLED ? this.fulfilledHandlers : this.rejectedHandlers ), this.result );
 

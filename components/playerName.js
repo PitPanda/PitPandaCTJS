@@ -1,4 +1,4 @@
-import { fixColorEncoding, fetchFromPitPanda, addClickEvent, openProfile, nameResolve } from '../utils';
+import { addClickEvent, openProfile, nameResolve } from '../utils';
 import * as Elementa from 'Elementa/index';
 
 /**

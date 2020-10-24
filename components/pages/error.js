@@ -1,15 +1,27 @@
 import * as Elementa from 'Elementa/index';
 import { createBasicTab } from '../tabs/basic';
+import { ySpacer } from '../utility';
 
 /**
  * TODO
  * @param {string} reason
+ * @param {Tab} tab
  */
-export const createErrorPageContent = reason => {
+export const createErrorPageContent = (reason, tab) => {
+  tab.setName('Error')
   const root = new Elementa.UIContainer()
     .setHeight(new Elementa.ChildBasedMaxSizeConstraint())
-    .addChild(new Elementa.UIText('TODO ERROR PAGE'))
-    .addChild(new Elementa.UIText(reason))
+    .setWidth(new Elementa.RelativeConstraint(1))
+    .addChildren([
+      ySpacer(50),
+      new Elementa.UIText('Uh oh! An error has occured!')
+        .setX(new Elementa.CenterConstraint())
+        .setY(new Elementa.SiblingConstraint()),
+      ySpacer(5),
+      new Elementa.UIText('§c'+reason)
+        .setX(new Elementa.CenterConstraint())
+        .setY(new Elementa.SiblingConstraint()),
+    ])
   return root;
 }
 
@@ -19,6 +31,7 @@ export const createErrorPageContent = reason => {
  */
 export const createErrorPage = reason => ({
   async: false,
-  renderer: () => createErrorPageContent(reason),
+  renderer: tab => createErrorPageContent(reason, tab),
   tabComponentHandler: createBasicTab,
+  ids: [],
 })
