@@ -5,6 +5,12 @@
 import * as Elementa from 'Elementa/index';
 
 declare global {
+  type Timeout = {
+    cancel(): void;
+    fn: () => void;
+    cancelled: boolean;
+  }
+
   /**
    * First is method to call when component is initialized. 
    * Second is to be called on cleanup.
@@ -26,18 +32,24 @@ declare global {
   type Tab = {
     page: Page,
     getName(): string;
-    setName(value: string): void;
+    setName(value: string): this;
+    getPinned(): boolean;
+    setPinned(value: boolean): this;
     componentHandler: TabComponentHandler;
-    select(force?: boolean): void;
+    select(force?: boolean): this;
     close(): void;
+    timeout?: Timeout;
   }
 
-  type Page = {
-    async: boolean;
-    tabComponentHandler: (tab: Tab, options: TabComponentHandlerOptions) => TabComponentHandler;
-    loadingPromise?: Promise<any>;
-    loadingRenderer?: () => DelicateComponent;
+  type Page = ({
+    async: true;
+    loadingPromise: Promise<any>;
+    loadingRenderer: () => DelicateComponent;
+  } | {
+    async: false;
+  }) & {
     renderer: (tab: Tab, data?: any) => Elementa.UIComponent;
+    tabComponentHandler: (tab: Tab, options: TabComponentHandlerOptions) => TabComponentHandler;
     ids: string[];
   }
 }

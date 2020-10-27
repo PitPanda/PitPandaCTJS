@@ -1,3 +1,5 @@
+const { interval } = require("../utils");
+
 register('command', () => {
   console.log(Player.getHeldItem().getRawNBT().toString())
 }).setName('holdingNbt');
@@ -14,12 +16,13 @@ register('command', id => {
 const JSLoader = Java.type("com.chattriggers.ctjs.engine.langs.js.JSLoader")
 register('command', () => {
   let cooldown = 6;
-  (function tick(){
+  interval(timeout => {
     const triggers = ReflectionHelper.getPrivateValue(JSLoader, JSLoader, '_', 'triggers');
     triggers.forEach(trigger => {
       ChatLib.chat(trigger.toString());
     })
     ChatLib.chat(triggers.length.toString());
-    if(cooldown--) setTimeout(tick, 10e3)
-  })()
+    cooldown--;
+    if(!cooldown) timeout.cancel();
+  }, 10e3) 
 }).setName('viewtriggers');

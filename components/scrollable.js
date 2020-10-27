@@ -28,7 +28,10 @@ export const createScrollable = (comp, eventLinker) => {
         floatingWindow.draw()
         scrollSize = root.getHeight()**2/comp.getHeight();
         scrollBar.setHeight(scrollSize.pixels())
-      };
+      }else{
+        scrollPos = 0
+        comp.setY((0).pixels())
+      }
     }))
     .addChild(comp)
   const scrollBar = new Elementa.UIBlock(new Color(.9,.9,.9,.7))

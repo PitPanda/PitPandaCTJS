@@ -1,5 +1,5 @@
 import * as Elementa from 'Elementa/index';
-import Promise from '../Promise';
+import { Promise } from '../../PromiseV2';
 
 import { createScrollable } from './scrollable';
 

@@ -1,6 +1,6 @@
 import * as Elementa from 'Elementa/index';
-import request from "./request";
-import Promise from './Promise';
+import { request } from "../requestV2";
+import { Promise } from '../PromiseV2';
 import { PitPandaURL } from './constants';
 import { addCustomCompletion } from '../CustomTabCompletions';
 
@@ -36,7 +36,6 @@ export const fixColorEncoding = (str) => str
 
 /**
  * @param {string} path 
- * @returns {Promise<any>}
  */
 export const fetchFromPitPanda = path => request({
   url: `${PitPandaURL}/api${path}`,
@@ -65,11 +64,6 @@ export const formatPlaytime = time => {
  */
 export const sentenceCase = str => str.charAt(0).toUpperCase() + str.substring(1);
 
-/**
- * only called once.
- * @param {Function} cb
- * @returns {void}
- */
 export const onGuiClose = (() => {
   let waiting = [];
   let last = null;
@@ -88,7 +82,13 @@ export const onGuiClose = (() => {
     })
     last = e.gui;
   })
-  return (cb, gui = null) => waiting.push([cb, gui]);
+  /**
+   * only called once.
+   * @param {() => void} cb
+   * @returns {void}
+   */
+  const fn = (cb, gui = null) => waiting.push([cb, gui]);
+  return fn;
 })()
 
 /**
@@ -177,12 +177,20 @@ export const timeSince = date => { // https://stackoverflow.com/questions/317783
 }
 
 /**
- * @param {string} args 
+ * @param {string} match 
+ * @param {string[]} samples 
+ */
+export const filterMatchingStart = (match, samples) => samples.filter(s=>s.startsWith(match));
+
+export const getPlayerNames = () => World.getAllPlayers().map(p=>p.getName().toLowerCase());
+
+/**
+ * @param {string[]} args 
  * @returns {string[]}
  */
-export const nameParam = args => {
+export const nameParam = (args) => {
   const last = args[args.length - 1] ?? '';
-  return World.getAllPlayers().map(p=>p.getName().toLowerCase()).filter(s=>s.startsWith(last));
+  return filterMatchingStart(last, getPlayerNames());
 };
 
 /**
@@ -252,12 +260,92 @@ export const getMap = () => new Promise((resolve, reject) => {
 
 /**
  * @param {string[]} aliases 
- * @param {(args: string[]) => void} implementation 
- * @param {(args: string[]) => string[]} completer 
+ * @param {(...args: string[]) => void} implementation 
+ * @param {(...args: string[]) => string[]} completer 
  */
 export const registerCommandWithAliases = (aliases, implementation, completer) => {
   for(let alias of aliases){
     const cmd = register('command', implementation).setName(alias);
     if(completer) addCustomCompletion(cmd, completer);
   }
+}
+
+/**
+ * @returns {boolean}
+ */
+export const isInPit = () => Scoreboard.getTitle().removeFormatting().equals('THE HYPIXEL PIT');
+
+export const onEnterPit = (()=>{
+  let inPit = false;
+  /**
+   * @type {() => (undefined | () => void)}
+   */
+  const onEnter = [];
+  /**
+   * @type {() => void)}
+   */
+  const onExit = [];
+  register('worldLoad', () => {
+    setTimeout(() => {
+      if(isInPit()){
+        onEnter.forEach(f => {
+          const exit = f();
+          if(exit) onExit.push(exit);
+        });
+        inPit = true;
+      }
+    }, 100);
+  });
+  register('worldUnload', () => {
+    if(inPit) while(onExit.length) onExit.pop()();
+    inPit = false;
+  });
+  /**
+   * note runs 100ms late to give the scoreboard a chance to update
+   * if someone has seriously bad ping this could fail lol
+   * @param {() => (undefined | () => void)} enter
+   */
+  const fn = (enter) => onEnter.push(enter);
+  return fn;
+})();
+
+/**
+ * @param {() => void} fn 
+ * @param {number} ms 
+ * @returns {Timeout}
+ */
+export const timeout = (fn, ms) => {
+  let canceled = false;
+  const cancel = () => self.cancelled = true;
+  const self = {
+    cancel,
+    fn,
+    cancelled: false,
+  }
+  setTimeout(() => {
+    if(self.canceled) return;
+    fn();
+  }, ms);
+  return self;
+}
+
+/**
+ * @param {(cancel: Timeout) => void} fn 
+ * @param {number} ms 
+ * @returns {Timeout}
+ */
+export const interval = (fn, ms) => {
+  let canceled = false;
+  const cancel = () => self.cancelled = true;
+  const self = {
+    cancel,
+    fn,
+    cancelled: false,
+  }
+  setTimeout(function tick(){
+    if(canceled) return;
+    fn(self);
+    setTimeout(tick, ms)
+  }, ms);
+  return self;
 }

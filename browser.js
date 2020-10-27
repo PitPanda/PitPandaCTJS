@@ -2,9 +2,10 @@ import { createPageRoot } from './components/pageRoot';
 import { createLoadingComponent } from './components/loading';
 import { hostEvents, onGuiClose } from "./utils";
 import * as Elementa from 'Elementa/index';
-import Promise from './Promise';
+import { Promise } from '../PromiseV2';
 import { createHomePage } from './components/pages/home'
 import { createErrorPage } from './components/pages/error';
+import { getSetting } from './settings';
 
 export const browser = {
   /**
@@ -104,6 +105,7 @@ export const browser = {
 
     if(!this.tabs.length) {
       const newTab = this._createTab(createHomePage())
+      newTab.setPinned(true);
       this.activeTab = [0, newTab]
       this.tabs.push(newTab);
     }
@@ -189,32 +191,45 @@ export const browser = {
   _createTab(page){
     const that = this;
     let name = 'New Tab';
+    let pinned = false;
     /**
      * @type {Tab}
      */
     const tab = {
       page: page,
+      getPinned(){
+        return pinned;
+      },
+      setPinned(value){
+        pinned = value;
+        if(this.timeout) this.timeout.cancel();
+        return this;
+      },
       getName(){
         return name;
       },
       setName(newName){
         name = newName;
         this.componentHandler.update();
+        return this;
       },
       getIndex(){
         return that.tabs.indexOf(this);
       },
       select(force = false) {
         const newIndex = this.getIndex();
-        if(!force && this === that.activeTab[1]) return;
-        if(this !== that.activeTab[1]) {
-          that.activeTab[1].componentHandler.unfocused();
+        const prevTab = that.activeTab[1];
+        if(!force && this === prevTab) return;
+        if(this !== prevTab) {
+          prevTab.componentHandler.unfocused();
+          if(!prevTab.getPinned()) prevTab.timeout = setTimeout(() => prevTab.close(), getSetting('PageTimeout')*1e3)
           this.componentHandler.focused();
+          if(this.timeout) this.timeout.cancel();
         }
         that.activeTab = [newIndex, this];
         that._triggerWindowChange();
         const page = this.page;
-        if(page.async){
+        if(page.async == true){
           this.setName('Loading')
           that.contentRoot.clearChildren();
           const [initLoader, cleanupLoader] = (page.loadingRenderer || createLoadingComponent)();
@@ -233,6 +248,7 @@ export const browser = {
           that.contentRoot.clearChildren();
           that.contentRoot.addChild(page.renderer(this));
         }
+        return this;
       },
       close(){
         const oldIndex = that.activeTab[0];

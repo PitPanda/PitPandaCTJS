@@ -1,4 +1,4 @@
-import { timeSince, fetchFromPitPanda, addClickEvent } from '../../utils';
+import { timeSince, fetchFromPitPanda, addClickEvent, isInPit } from '../../utils';
 import * as Elementa from 'Elementa/index';
 import { createCard, createHeadlessCard, tabbedCard } from '../cards';
 import { createProfileDisplay } from '../profileDisplay';
@@ -25,7 +25,7 @@ const profileRender = (tab, data) => {
 
 
   const tradePrompt = [];
-  if(World.getAllPlayers().some( p=> 
+  if(isInPit() && World.getAllPlayers().some( p=> 
     p.getUUID().toString().replace(/-/g,'') === player.uuid &&
     p.getUUID().toString() !== Player.getUUID().toString()
   )) {

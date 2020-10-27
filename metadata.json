@@ -1,4 +1,4 @@
 {
     "entry":"index.js",
-    "requires":["Elementa","CustomTabCompletions"]
+    "requires":["PromiseV2","requestV2","Elementa","CustomTabCompletions"]
 }

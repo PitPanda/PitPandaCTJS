@@ -19,13 +19,13 @@ export const createInv = (inv, rowSize=9) => {
   root.setWidth(rowPixels.pixels())
   root.setHeight(new Elementa.ChildBasedSizeConstraint())
   for(let i = 0; i < inv.length/rowSize; i++){
-    var row = new Elementa.UIContainer()
+    let row = new Elementa.UIContainer()
       .setWidth(rowPixels.pixels())
       .setHeight((18).pixels())
       .setX((0).pixels())
       .setY(new Elementa.SiblingConstraint())
     for(let j = 0; j < rowSize; j++){
-      var item = createItem(inv[i*rowSize+j] || null);
+      let item = createItem(inv[i*rowSize+j] || null);
       row.addChild(item);
     }
     root.addChild(row);
@@ -67,13 +67,7 @@ export const createItem = item => {
   NBTtaglore.func_74782_a('Lore', NBTlore) //setTag
   itemstack.func_77982_d(NBTtag) //setTagCompoung
   itemstack.func_151001_c(item.name) //setStackDisplayName
-
-  /*
-  if(item.desc && item.desc.some(line => line.includes('Angel'))){
-    Player.getPlayer().field_71071_by.func_70441_a(itemstack) // inventory addItemStackToInventory
-  }
-  */
-
+  
   const ctItem = new Item(itemstack);
   if(item.id >= 298 && item.id <= 301) mcitemtype.func_82813_b(itemstack, item.meta) //setColor
   const lore = createLore(item);
