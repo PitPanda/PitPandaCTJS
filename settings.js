@@ -4,6 +4,7 @@ const settingsPath = `${ModuleDir}/local.json`;
 
 const defaults = {
   SpawnPlayersVisibility: true,
+  ClickOpenProfiles: true,
   PageTimeout: 120,
 }
 

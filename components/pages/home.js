@@ -3,7 +3,7 @@ import { addClickEvent, fetchFromPitPanda, noop, openProfile } from '../../utils
 import { createErrorPage } from './error';
 import { createProfileDisplay } from '../profileDisplay';
 import { outlineEffect } from '../../effects';
-import { createInput } from '../inputs/text';
+import { createInput } from '../controls/text';
 import { logo, theColor, white } from '../../constants';
 import { createPadding } from '../utility';
 
@@ -103,7 +103,6 @@ const tabController = (tab, options) => {
 export const createHomePageContent = (tab, data) => {
   const input = createInput({
     onEnter: openProfile,
-    color: theColor,
     alwaysFocused: true,
   });
   return new Elementa.UIContainer()

@@ -3,7 +3,6 @@ import { createBasicTab } from '../tabs/basic';
 import { ySpacer } from '../utility';
 
 /**
- * TODO
  * @param {string} reason
  * @param {Tab} tab
  */

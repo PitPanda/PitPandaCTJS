@@ -1,4 +1,4 @@
-import { noop } from './utils';
+import { colorToLong, noop } from './utils';
 import * as Elementa from 'Elementa/index';
 
 /**
@@ -19,19 +19,24 @@ export class MetaEffect {
     this.enabled = true;
   }
 
-  enable(){
-    this.enabled = true;
+  /**
+   * @param {boolean} state 
+   */
+  setEnabled(state){
+    this.enabled = state;
     return this;
+  }
+
+  enable(){
+    return this.setEnabled(true);
   }
 
   disable(){
-    this.enabled = false;
-    return this;
+    return this.setEnabled(false);
   }
 
   toggle(){
-    this.enabled = !this.enabled;
-    return this;
+    return this.setEnabled(!this.enabled);
   }
 
   /**
@@ -121,3 +126,12 @@ export const backgroundEffect = color => {
   });
 }
 
+/**
+ * @param {JavaColor} color 
+ */
+export const fillEffect = color => {
+  const longColor = colorToLong(color);
+  return beforeChildrenDrawEffect(comp => {
+    Renderer.drawRect(longColor, comp.getLeft(), comp.getTop(), comp.getWidth(), comp.getHeight());
+  })
+}

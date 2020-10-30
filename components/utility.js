@@ -1,5 +1,7 @@
-import { fixColorEncoding } from '../utils';
+import { colorToLong, fixColorEncoding } from '../utils';
 import * as Elementa from 'Elementa/index';
+import { beforeChildrenDrawEffect } from '../effects';
+import { white } from '../constants';
 
 /**
  * @param {number} pixels 
@@ -42,3 +44,23 @@ export const createColoredText = (str,x=0,y=0,scale=1) => new Elementa.UIText(fi
   .setX(x.pixels())
   .setY(y.pixels())
   .setTextScale(new Elementa.ScaledTextConstraint(scale/9))
+
+/**
+ * @param {Elementa.WidthConstraint} widthConstraint 
+ * @param {number} drawGap 
+ */
+export const dashSpacer = (widthConstraint, drawGap) => {
+  return new Elementa.UIContainer()
+    .setX(new Elementa.SiblingConstraint())
+    .setY(new Elementa.CenterConstraint())
+    .setWidth(widthConstraint)
+    .setHeight((1).pixels())
+    .enableEffect(beforeChildrenDrawEffect(comp => {
+      const width = comp.getWidth();
+      Renderer.drawRect(
+        colorToLong(white), 
+        comp.getLeft()+drawGap, comp.getTop(), 
+        width-2*drawGap, comp.getHeight(), 
+      )
+    }))
+}

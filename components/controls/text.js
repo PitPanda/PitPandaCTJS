@@ -1,4 +1,6 @@
 import * as Elementa from 'Elementa/index';
+import { theColor } from '../../constants';
+import { fillEffect, MetaEffect } from '../../effects';
 import { addClickEvent, noop, registerOnce } from '../../utils';
 
 const Color = Java.type('java.awt.Color');
@@ -16,7 +18,7 @@ setTimeout(() => {
  * @property {string} initial
  * @property {RegExp} allowedChars
  * @property {Elementa.XConstraint} textXConst
- * @property {JavaColor} color
+ * @property {JavaColor} focusBackgroundColor
  * @property {boolean} alwaysFocused
  * @property {(value: string) => void} onEnter
  * @property {(value: string) => void} onChange
@@ -29,7 +31,7 @@ const defaults = {
   initial: '',
   allowedChars: /[_a-zA-Z0-9]/,
   textXConst: (2).pixels(),
-  color: new Color(0,0,0,0),
+  focusBackgroundColor: theColor,
   alwaysFocused: false,
   onEnter: noop,
   onChange: noop,
@@ -40,8 +42,10 @@ const defaults = {
  */
 export const createInput = (opts = {}) => {
   const options = {...defaults, ...opts};
-  const component = new Elementa.UIBlock(options.color);
-  let [getState, setState] = (()=>{
+  const backgroundEffect = new MetaEffect(fillEffect(options.focusBackgroundColor));
+  const component = new Elementa.UIContainer()
+    .enableEffect(backgroundEffect);
+  const [getState, setState] = (()=>{
     let state = '';
     return [
       () => state,
@@ -55,17 +59,32 @@ export const createInput = (opts = {}) => {
             .setY(new Elementa.CenterConstraint())
             .setX(options.textXConst)
         )
+        return value;
       },
     ]
   })();
   setState(options.initial);
-  let focused = options.alwaysFocused;
+  const [getFocused, setFocused] = (()=>{
+    let focus = true;
+    return [
+      () => focus,
+      /**
+       * @param {boolean} value
+       */
+      value => {
+        backgroundEffect.setEnabled(value);
+        focus = value;
+        return value;
+      },
+    ]
+  })();
+  setFocused(options.alwaysFocused)
   /**
    * @param {Gui} gui 
    */
   const prepListener = gui => {
     const listener = gui.registerKeyTyped((char, keyCode) => {
-      if(!focused) return;
+      if(!getFocused()) return;
       if(keyCode === 28) return options.onEnter(getState());
       if(keyCode === 14) {
         if(gui.isControlDown()){
@@ -87,11 +106,12 @@ export const createInput = (opts = {}) => {
   else prepListener(browser.gui);
   if(!options.alwaysFocused){
     addClickEvent(component, () => {
-      focused = true;
+      setFocused(true);
       const registerExitFocus = () => registerOnce('guiMouseClick', () => {
         if(component.isHovered()) return registerExitFocus();
-        focused = false;
-      })
+        setFocused(false);
+      });
+      registerExitFocus();
     });
   }
   return {

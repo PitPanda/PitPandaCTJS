@@ -201,7 +201,7 @@ export const openProfile = tag => browser.openPage(createProfile(tag));
 /**
  * @param {JavaColor} color 
  */
-export const colorToLong = color => color.a * 0xFF000000 + color.r * 0xFF0000 + color.g * 0xFF00 + color.b * 0xFF
+export const colorToLong = color => color.getAlpha() * 0x01000000 + color.getRed() * 0x010000 + color.getGreen() * 0x0100 + color.getBlue() * 0x01
 
 /**
  * @param {number} long 
@@ -294,14 +294,14 @@ export const onEnterPit = (()=>{
         });
         inPit = true;
       }
-    }, 100);
+    }, 1e3);
   });
   register('worldUnload', () => {
     if(inPit) while(onExit.length) onExit.pop()();
     inPit = false;
   });
   /**
-   * note runs 100ms late to give the scoreboard a chance to update
+   * note runs 1s late to give the scoreboard a chance to update
    * if someone has seriously bad ping this could fail lol
    * @param {() => (undefined | () => void)} enter
    */
@@ -315,7 +315,6 @@ export const onEnterPit = (()=>{
  * @returns {Timeout}
  */
 export const timeout = (fn, ms) => {
-  let canceled = false;
   const cancel = () => self.cancelled = true;
   const self = {
     cancel,

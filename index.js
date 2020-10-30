@@ -5,4 +5,5 @@
 
 import './commands/pitpanda';
 import './commands/other';
-import './settings';
+import './features/clickOpenProfile';
+import './features/spawnPlayersVisibility';
