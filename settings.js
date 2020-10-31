@@ -1,4 +1,4 @@
-const { ModuleDir } = require("./constants");
+import { ModuleDir } from "./constants";
 
 const settingsPath = `${ModuleDir}/local.json`;
 
@@ -6,6 +6,7 @@ const defaults = {
   SpawnPlayersVisibility: true,
   ClickOpenProfiles: true,
   PageTimeout: 120,
+  PageTransitionTime: 120,
 }
 
 /**
@@ -22,9 +23,9 @@ const raw = FileLib.read(settingsPath);
  */
 const settings = raw ? JSON.parse(raw) : {}; // this looks weird, but its so that we dont modify defaults;
 
-register('gameUnload', () => {
-  FileLib.write(settingsPath, JSON.stringify(settings))
-});
+export const saveSettings = () => FileLib.write(settingsPath, JSON.stringify(settings))
+
+register('gameUnload', saveSettings);
 
 /**
  * @type {Map<SettingsKey, ((state: Settings[SettingsKey])=>void)[]>}

@@ -1,34 +1,20 @@
 import * as Elementa from 'Elementa/index';
 import { Promise } from '../../PromiseV2';
 
-import { createScrollable } from './scrollable';
-
 const Color = Java.type('java.awt.Color');
 
 /**
  * @param {Elementa.Window} window 
- * @param {(window: Elementa.Window) => void} eventLinker
  * @returns {Promise<Elementa.UIBlock>}
  */
-export const createPageRoot = (window, eventLinker) => {
+export const createPageRoot = window => {
   return new Promise(resolve => {
-    eventLinker(window);
     const root = new Elementa.UIBlock(new Color(0.1,0.1,.1,.75))
-      .setHeight(
-        new Elementa.MinConstraint(
-          new Elementa.AdditiveConstraint(
-            new Elementa.ChildBasedMaxSizeConstraint(),
-            (120).pixels()
-          ),
-          new Elementa.RelativeConstraint(1)
-        )
-      )
+      .setHeight( new Elementa.RelativeConstraint(1))
+      .setX(new Elementa.CenterConstraint())
     
-    window.addChild(
-      createScrollable(root, eventLinker)
-        .setX(new Elementa.CenterConstraint())
-        .setY(new Elementa.CenterConstraint())
-    );
+    window.addChild(root);
+
 
     const time = 0.5;
     const animation = root.makeAnimation();

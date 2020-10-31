@@ -1,6 +1,6 @@
-import { fixColorEncoding, measureString } from '../utils';
+import { fixColorEncoding, isComponentOnScreen, measureString } from '../utils';
 import { exitShader, useShader } from '../shaders';
-import { emptyEffect, beforeChildrenDrawEffect, MetaEffect } from '../effects';
+import { emptyEffect, beforeChildrenDrawEffect, MetaEffect, escapeScissorEffect, conditionalEffect } from '../effects';
 import * as Elementa from 'Elementa/index';
 import { createPadding, createColoredText } from './utility';
 
@@ -110,8 +110,7 @@ export const createItem = item => {
     shadowWindow = null;
     effects.remove(drawLoreEffect, hoverBackEffect)
   });
-
-  comp.enableEffect(effects);
+  comp.enableEffect(conditionalEffect(effects, isComponentOnScreen));
   return padded;
 }
 
@@ -125,11 +124,14 @@ export const createLore = item => {
   const root = new Elementa.UIRoundedRectangle(3)
     .setHeight((4+12*desc.length).pixels())
     .setColor(new Elementa.ConstantColorConstraint(new Color(0.1,.01,0.1,.95)))
-    .enableEffect({
-      ...emptyEffect,
-      beforeDraw: () => Renderer.translate(0,0,500),
-      afterDraw: () => Renderer.translate(0,0,-500)
-    })
+    .enableEffects([
+      {
+        ...emptyEffect,
+        beforeDraw: () => Renderer.translate(0,0,500),
+        afterDraw: () => Renderer.translate(0,0,-500)
+      },
+      escapeScissorEffect()
+    ])
   const lines = desc.map((line,i) => {
     const lineComp = createColoredText(line || ' ',4,12*i+4) //for some reaosn empty string breaks it
     root.addChild(lineComp);

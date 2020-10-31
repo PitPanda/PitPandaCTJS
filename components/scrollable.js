@@ -19,20 +19,23 @@ export const createScrollable = (comp, eventLinker) => {
   const floatingWindow = new Elementa.Window();
   eventLinker(floatingWindow);
   const root = new Elementa.UIContainer()
-    .setWidth(new Elementa.ChildBasedSizeConstraint())
+    .setWidth(new Elementa.RelativeConstraint(1))
     .setHeight(new Elementa.RelativeConstraint(1))
-    .enableEffect(beforeDrawEffect(() => {
-      if(isEnabled()) {
-        comp.setY((-1*(scrollPos/maxScrollPos()*scaledMaxScroll())).pixels())
-        scrollBar.setY(scrollPos.pixels())
-        floatingWindow.draw()
-        scrollSize = root.getHeight()**2/comp.getHeight();
-        scrollBar.setHeight(scrollSize.pixels())
-      }else{
-        scrollPos = 0
-        comp.setY((0).pixels())
-      }
-    }))
+    .enableEffects([
+      beforeDrawEffect(() => {
+        if(isEnabled()) {
+          comp.setY((-1*(scrollPos/maxScrollPos()*scaledMaxScroll())).pixels())
+          scrollBar.setY(scrollPos.pixels())
+          floatingWindow.draw()
+          scrollSize = root.getHeight()**2/comp.getHeight();
+          scrollBar.setHeight(scrollSize.pixels())
+        }else{
+          scrollPos = 0
+          comp.setY((0).pixels())
+        }
+      }),
+      new Elementa.ScissorEffect()
+    ])
     .addChild(comp)
   const scrollBar = new Elementa.UIBlock(new Color(.9,.9,.9,.7))
     .setWidth((6).pixels())

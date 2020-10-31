@@ -107,11 +107,14 @@ export const createInput = (opts = {}) => {
   if(!options.alwaysFocused){
     addClickEvent(component, () => {
       setFocused(true);
-      const registerExitFocus = () => registerOnce('guiMouseClick', () => {
-        if(component.isHovered()) return registerExitFocus();
-        setFocused(false);
-      });
-      registerExitFocus();
+      let exitFocusTrigger;
+      (function reRegister(){
+        exitFocusTrigger = registerOnce('guiMouseClick', () => {
+          if(component.isHovered()) return reRegister();
+          setFocused(false);
+        })
+      })();
+      browser.onWindowChange(() => exitFocusTrigger.unregister());
     });
   }
   return {

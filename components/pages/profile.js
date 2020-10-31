@@ -15,7 +15,7 @@ const profileRender = (tab, data) => {
   const player = data.data;
 
   tab.setName(player.name);
-  tab.page.ids.push(player.uuid);
+  if(!tab.page.ids.includes(player.uuid)) tab.page.ids.push(player.uuid);
   
   const left = new Elementa.UIContainer()
     .setX((5).pixels())
@@ -113,7 +113,18 @@ const profileRender = (tab, data) => {
   right.setWidth(new Elementa.ChildBasedMaxSizeConstraint())
 
   return new Elementa.UIContainer()
-    .setHeight(new Elementa.ChildBasedMaxSizeConstraint())
+    .setHeight(
+      new Elementa.MinConstraint(
+        new Elementa.AdditiveConstraint(
+          new Elementa.ChildBasedMaxSizeConstraint(),
+          (120).pixels()
+        ),
+        new Elementa.RelativeConstraint(1)
+      )
+    )
+    .setWidth(
+      new Elementa.ChildBasedSizeConstraint()
+    )
     .addChildren([left, right]);
 }
 

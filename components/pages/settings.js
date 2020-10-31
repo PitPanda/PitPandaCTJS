@@ -1,7 +1,7 @@
 import * as Elementa from 'Elementa/index';
 import { white } from '../../constants';
 import { beforeChildrenDrawEffect, outlineEffect } from '../../effects';
-import { getSetting, setSetting } from '../../settings';
+import { getSetting, saveSettings, setSetting } from '../../settings';
 import { addClickEvent, measureString } from '../../utils';
 import { createInput } from '../controls/text';
 import { createToggleable } from '../controls/toggleable';
@@ -147,6 +147,7 @@ export const createSettingsPageContent = (tab) => {
         new Elementa.UIContainer()
           .addChildren([
             createNumberInputSetting('Tab timeout in seconds', 'PageTimeout'),
+            createNumberInputSetting('Tab Transition animation in miliseconds', 'PageTransitionTime'),
           ])
           .setWidth(new Elementa.RelativeConstraint(1))
           .setHeight(new Elementa.ChildBasedSizeConstraint())
@@ -171,6 +172,15 @@ export const createSettingsPageContent = (tab) => {
 export const createSettingsPage = () => ({
   async: false,
   renderer: tab => createSettingsPageContent(tab),
-  tabComponentHandler: createBasicTab,
+  tabComponentHandler: (...args) => {
+    const basic = createBasicTab(...args);
+    return {
+      ...basic, 
+      unfocused(){
+        basic.unfocused();
+        saveSettings();
+      }
+    }
+  },
   ids: ['settings'],
 })

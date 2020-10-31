@@ -1,4 +1,4 @@
-const { interval } = require("../utils");
+import { interval } from "../utils";
 
 register('command', () => {
   console.log(Player.getHeldItem().getRawNBT().toString())
@@ -16,13 +16,19 @@ register('command', id => {
 const JSLoader = Java.type("com.chattriggers.ctjs.engine.langs.js.JSLoader")
 register('command', () => {
   let cooldown = 6;
+  let prevTriggers = ReflectionHelper.getPrivateValue(JSLoader, JSLoader, '_', 'triggers').map(t => t.toString());
+  ChatLib.chat(`starting triggers: ${prevTriggers.length}`)
   interval(timeout => {
-    const triggers = ReflectionHelper.getPrivateValue(JSLoader, JSLoader, '_', 'triggers');
+    const triggers = ReflectionHelper.getPrivateValue(JSLoader, JSLoader, '_', 'triggers').map(t => t.toString());
+    ChatLib.chat(`now triggers: ${triggers.length}`)
     triggers.forEach(trigger => {
-      ChatLib.chat(trigger.toString());
+      if(!prevTriggers.includes(trigger)) ChatLib.chat(`Added: ${trigger}`);
     })
-    ChatLib.chat(triggers.length.toString());
+    prevTriggers.forEach(trigger => {
+      if(!triggers.includes(trigger)) ChatLib.chat(`Removed: ${trigger}`);
+    })
+    prevTriggers = triggers;
     cooldown--;
     if(!cooldown) timeout.cancel();
-  }, 10e3) 
+  }, 5e3) 
 }).setName('viewtriggers');

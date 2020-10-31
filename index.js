@@ -7,3 +7,5 @@ import './commands/pitpanda';
 import './commands/other';
 import './features/clickOpenProfile';
 import './features/spawnPlayersVisibility';
+
+console.log('----- Loading PitPanda -----')

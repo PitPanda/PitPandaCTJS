@@ -1,8 +1,17 @@
-import { onGuiClose } from '../utils';
 import { outlineEffect, beforeDrawEffect } from '../effects';
 import * as Elementa from 'Elementa/index';
 import { theColor, theColorButForCTJS } from '../constants';
 import { createPadding, xSpacer } from './utility';
+import { addClickEvent } from '../utils';
+
+
+/**
+ * @type {import('../browser')['browser']}
+ */
+let browser;
+setTimeout(() => {
+  browser = require('../browser').browser;
+}, 2);
 
 /**
  * @param {string} headerText 
@@ -63,20 +72,13 @@ export const tabbedCard = (tabs, widthConstraint) => {
   const labels = keys.map((key,i) => {
     const label = new Elementa.UIText(i === 0 ? `§n${key}` : key).setX(new Elementa.SiblingConstraint());
     labelRefs[key] = label;
-    const clickTrigger = register('guiMouseClick', (x,y,b) => {
-      if(
-        x >= label.getLeft() && x <= label.getRight() &&
-        y >= label.getTop() && y <= label.getBottom() &&
-        b === 0
-      ) {
-        contentHolder.clearChildren();
-        contentHolder.addChild(tabs[key]);
-        labelRefs[selected].setText(selected);
-        labelRefs[key].setText(`§n${key}`);
-        selected = key;
-      }
-    })
-    onGuiClose(() => clickTrigger.unregister())
+    addClickEvent(label, () => {
+      contentHolder.clearChildren();
+      contentHolder.addChild(tabs[key]);
+      labelRefs[selected].setText(selected);
+      labelRefs[key].setText(`§n${key}`);
+      selected = key;
+    });
     return new Elementa.UIContainer()
       .addChildren([label,xSpacer(4)])
       .setHeight(new Elementa.ChildBasedMaxSizeConstraint())

@@ -65,46 +65,54 @@ export const formatPlaytime = time => {
 export const sentenceCase = str => str.charAt(0).toUpperCase() + str.substring(1);
 
 export const onGuiClose = (() => {
+  /**
+   * @type {[() => void, Gui][]}
+   */
   let waiting = [];
   let last = null;
-  register('guiOpened', e => {
+  register('guiOpened', _ => {
+    const current = Client.currentGui.get();
     waiting = waiting.filter(([cb, gui]) => {
-      if(gui === null) {
-        if(e.gui === null){
-          cb();
-          return false;
-        }
-      }else if(last === gui){
-        cb();
-        return false;
-      }
-      return true;
+      if(gui !== last) return true
+      cb();
+      return false;
     })
-    last = e.gui;
+    last = current;
   })
   /**
    * only called once.
    * @param {() => void} cb
+   * @param {Gui} gui
    * @returns {void}
    */
-  const fn = (cb, gui = null) => waiting.push([cb, gui]);
+  const fn = (cb, gui) => waiting.push([cb, gui]);
   return fn;
 })()
 
 /**
  * @param {Gui} gui
- * @returns {(window: Elementa.Window) => void}
+ * @returns {(cleanUp: (() => void)) => (window: Elementa.Window) => void}
  */
 export const hostEvents = gui => {
-  const windows = [];
+  /**
+   * @type {Set<Elementa.Window>}
+   */
+  const windows = new Set();
   const triggers = [
-    gui.registerClicked((x,y,b) => windows.forEach(w => w.mouseClick(x,y,b))),
-    gui.registerMouseDragged((x,y,b) => windows.forEach(w => w.mouseDrag(x,y,b))),
-    gui.registerScrolled((x,y,s) => windows.forEach(w => w.mouseScroll(s))),
-    gui.registerMouseReleased((x,y,b) => windows.forEach(w => w.mouseRelease())),
+    gui.registerClicked((x,y,b) => [...windows].forEach(w => w.mouseClick(x,y,b))),
+    gui.registerMouseDragged((x,y,b) => [...windows].forEach(w => w.mouseDrag(x,y,b))),
+    gui.registerScrolled((x,y,s) => [...windows].forEach(w => w.mouseScroll(s))),
+    gui.registerMouseReleased((x,y,b) => [...windows].forEach(w => w.mouseRelease())),
   ]
-  onGuiClose(() => triggers.forEach(t => t.unregister()), gui)
-  return window => windows.push(window);
+  onGuiClose(() => triggers.forEach(t => t.unregister()), gui);
+  return cleanUp => { //note: if a window is associated with multiple cleanups it will get removed by the first one.
+    let subWindows = [];
+    cleanUp(() => subWindows.forEach(w => windows.delete(w)));
+    return window => {
+      subWindows.push(window);
+      windows.add(window);
+    }
+  }
 }
 
 /**
@@ -123,7 +131,7 @@ export const onDragged = (comp, handler) => {
     });
     registerOnce('guiMouseRelease', () => dragTrigger.unregister());
   });
-  browser.onBrowserClose(() => clickRegister.unregister())
+  browser.onWindowChange(() => clickRegister.unregister())
 }
 
 /**
@@ -265,7 +273,7 @@ export const getMap = () => new Promise((resolve, reject) => {
  */
 export const registerCommandWithAliases = (aliases, implementation, completer) => {
   for(let alias of aliases){
-    const cmd = register('command', implementation).setName(alias);
+    let cmd = register('command', implementation).setName(alias);
     if(completer) addCustomCompletion(cmd, completer);
   }
 }
@@ -315,16 +323,20 @@ export const onEnterPit = (()=>{
  * @returns {Timeout}
  */
 export const timeout = (fn, ms) => {
-  const cancel = () => self.cancelled = true;
   const self = {
-    cancel,
+    cancel: () => self.thread.interrupt(),
     fn,
     cancelled: false,
+    thread: new Thread(() => {
+      try{
+        Thread.sleep(ms);
+        fn();
+      }catch(e){
+        self.cancelled = true;
+      }
+    })
   }
-  setTimeout(() => {
-    if(self.canceled) return;
-    fn();
-  }, ms);
+  self.thread.start();
   return self;
 }
 
@@ -334,17 +346,33 @@ export const timeout = (fn, ms) => {
  * @returns {Timeout}
  */
 export const interval = (fn, ms) => {
-  let canceled = false;
-  const cancel = () => self.cancelled = true;
   const self = {
-    cancel,
+    cancel: () => self.thread.interrupt(),
     fn,
     cancelled: false,
+    thread: new Thread(() => {
+      try {
+        while(true){
+          Thread.sleep(ms);
+          fn(self);
+        }
+      }catch(e){
+        self.cancelled = true;
+      }
+    })
   }
-  setTimeout(function tick(){
-    if(canceled) return;
-    fn(self);
-    setTimeout(tick, ms)
-  }, ms);
+  self.thread.start();
   return self;
 }
+
+/**
+ * @param {Elementa.UIComponent} comp 
+ */
+export const isComponentOnScreen = comp => {
+  return (
+    comp.getBottom() >= 0 &&
+    comp.getTop() <= Renderer.screen.getHeight() &&
+    comp.getLeft() >= 0 &&
+    comp.getRight() <= Renderer.screen.getWidth()
+  )
+};

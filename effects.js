@@ -135,3 +135,44 @@ export const fillEffect = color => {
     Renderer.drawRect(longColor, comp.getLeft(), comp.getTop(), comp.getWidth(), comp.getHeight());
   })
 }
+
+const GL11 = Java.type('org.lwjgl.opengl.GL11');
+
+/**
+ * @returns {import('Elementa/index').Effect}
+ */
+export const escapeScissorEffect = () => {
+  let beforeState = false;
+  return {
+    ...emptyEffect,
+    beforeDraw(){
+      beforeState = GL11.glGetBoolean(GL11.GL_SCISSOR_TEST);
+      if(beforeState) GL11.glDisable(GL11.GL_SCISSOR_TEST)
+    },
+    afterDraw(){
+      if(beforeState) GL11.glEnable(GL11.GL_SCISSOR_TEST)
+    },
+  }
+}
+
+/**
+ * runs the conditional beforeDraw
+ * @param {Elementa.Effect} effect 
+ * @param {(comp: Elementa.UIComponent) => boolean} condition
+ * @returns {Elementa.Effect}
+ */
+export const conditionalEffect = (effect, condition) => {
+  let tickState = true;
+  return {
+    beforeDraw(comp){
+      tickState = condition(comp);
+      if(tickState) effect.beforeDraw(comp);
+    },
+    beforeChildrenDraw(comp){
+      if(tickState) effect.beforeChildrenDraw(comp);
+    },
+    afterDraw(comp){
+      if(tickState) effect.afterDraw(comp);
+    },
+  }
+}

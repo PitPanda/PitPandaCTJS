@@ -1,5 +1,5 @@
-const { getSetting, subscribeToSetting } = require("../settings");
-const { onEnterPit, getMap } = require("../utils");
+import { getSetting, subscribeToSetting } from "../settings";
+import { onEnterPit, getMap } from "../utils";
 
 let currentHeight = Infinity;
 const mapHeights = {
@@ -27,4 +27,4 @@ onEnterPit(() => {
     renderInSpawnTrigger.unregister();
     subscription.unsubscribe();
   }
-})
+});

@@ -1,5 +1,5 @@
-const { getSetting, subscribeToSetting } = require("../settings");
-const { onEnterPit } = require("../utils");
+import { getSetting, subscribeToSetting } from "../settings";
+import { onEnterPit } from "../utils";
 
 const trigger = register('chat', (message, event) => {
   message = message.replaceFormatting();

@@ -1,11 +1,12 @@
 import { createPageRoot } from './components/pageRoot';
 import { createLoadingComponent } from './components/loading';
-import { hostEvents, onGuiClose } from "./utils";
+import { hostEvents, onGuiClose, timeout } from "./utils";
 import * as Elementa from 'Elementa/index';
 import { Promise } from '../PromiseV2';
 import { createHomePage } from './components/pages/home'
 import { createErrorPage } from './components/pages/error';
 import { getSetting } from './settings';
+import { createScrollable } from './components/scrollable';
 
 export const browser = {
   /**
@@ -19,9 +20,9 @@ export const browser = {
   gui: null,
 
   /**
-   * @type {(window: Elementa.Window) => void}
+   * @type {ReturnType<import('./utils')['hostEvents']>}
    */
-  guiEventLink: null,
+  guiEventLinker: null,
 
   /**
    * @type {Elementa.Window}
@@ -88,15 +89,20 @@ export const browser = {
     this.guiEventLinker = hostEvents(this.gui);
     this.window = new Elementa.Window();
     this.isOpen = true;
-    this.openingPromise = createPageRoot(this.window, this.guiEventLinker).then(root => {
+    this.openingPromise = createPageRoot(this.window).then(root => {
+      this.guiEventLinker(this.onBrowserClose.bind(this))(this.window);
       this.root = root;
       this.header = new Elementa.UIContainer()
         .setWidth(new Elementa.RelativeConstraint(1))
         .setHeight((28).pixels())
       this.contentRoot = new Elementa.UIContainer()
         .setWidth(new Elementa.RelativeConstraint(1))
-        .setHeight(new Elementa.ChildBasedMaxSizeConstraint())
-        .setY(new Elementa.SiblingConstraint());
+        .setHeight(new Elementa.SubtractiveConstraint(
+          new Elementa.RelativeConstraint(1),
+          (28).pixels(),
+        ))
+        .setY(new Elementa.SiblingConstraint())
+        .enableEffect(new Elementa.ScissorEffect());
       this.root.addChildren([
         this.header,
         this.contentRoot,
@@ -113,6 +119,7 @@ export const browser = {
       this.openingPromise.then(() => {
         if(!this.isOpen) return;
         this.activeTab[1].select(true);
+        this.activeTab[1].focused();
         this.reloadHeader();
       });
     }
@@ -120,6 +127,9 @@ export const browser = {
     const renderTrigger = this.gui.registerDraw(() => this.window.draw());
 
     onGuiClose(() => {
+      this._triggerBrowserClose();
+      this._triggerWindowChange();
+      this.activeTab[1].unfocused();
       renderTrigger.unregister();
       this.isOpen = false;
       this.gui = null;
@@ -129,8 +139,6 @@ export const browser = {
       this.root = null;
       this.header = null;
       this.contentRoot = null;
-      this._triggerBrowserClose();
-      this._triggerWindowChange();
     }, this.gui);
     
     return this;
@@ -185,6 +193,36 @@ export const browser = {
   },
 
   /**
+   * @param {Elementa.UIComponent} content 
+   * @param {'left' | 'right'=} direction 
+   */
+  _mountContent(content, direction = 'left'){
+    const prevContent = this.contentRoot.children[0];
+    if(prevContent && prevContent !== content){
+      const animationTime = getSetting('PageTransitionTime')/1000;
+      let animation;
+      if(direction === 'left') {
+        animation = prevContent.makeAnimation();
+        this.contentRoot.addChild(content);
+        content.setX(new Elementa.SiblingConstraint());
+        animation.setXAnimation(Elementa.Animations.OUT_EXP, animationTime, (0).pixels(false,true));
+      } else {
+        animation = content.makeAnimation();
+        prevContent.setX(new Elementa.SiblingConstraint());
+        this.contentRoot.clearChildren().addChildren([content, prevContent]);
+        content.setX((0).pixels(false,true));
+        animation.setXAnimation(Elementa.Animations.OUT_EXP, animationTime, (0).pixels());
+      }
+      animation.onComplete(() => this.contentRoot.clearChildren().addChild(content))
+      animation.begin();
+    }else{
+      this.contentRoot
+        .clearChildren()
+        .addChild(content);
+    }
+  },
+
+  /**
    * @param {Page} page
    * @returns {Tab}
    */
@@ -216,51 +254,69 @@ export const browser = {
       getIndex(){
         return that.tabs.indexOf(this);
       },
+      focused(){
+        this.componentHandler.focused();
+        if(this.timeout) this.timeout.cancel();
+      },
+      unfocused(){
+        this.componentHandler.unfocused();
+        if(!this.getPinned()) this.timeout = timeout(() => this.close(), getSetting('PageTimeout')*1e3)
+      },
       select(force = false) {
-        const newIndex = this.getIndex();
         const prevTab = that.activeTab[1];
-        if(!force && this === prevTab) return;
+        const direction = this.getIndex() < that.activeTab[0] ? 'right' : 'left';
+        if(this === prevTab && !force) return;
         if(this !== prevTab) {
-          prevTab.componentHandler.unfocused();
-          if(!prevTab.getPinned()) prevTab.timeout = setTimeout(() => prevTab.close(), getSetting('PageTimeout')*1e3)
-          this.componentHandler.focused();
-          if(this.timeout) this.timeout.cancel();
+          prevTab.unfocused();
+          this.focused();
         }
-        that.activeTab = [newIndex, this];
+        that.activeTab = [this.getIndex(), this];
         that._triggerWindowChange();
         const page = this.page;
         if(page.async == true){
-          this.setName('Loading')
-          that.contentRoot.clearChildren();
+          this.setName('Loading');
           const [initLoader, cleanupLoader] = (page.loadingRenderer || createLoadingComponent)();
-          that.contentRoot.addChild(initLoader());
+          const asyncRoot = new Elementa.UIContainer()
+            .setWidth(new Elementa.RelativeConstraint(1))
+            .setHeight(new Elementa.RelativeConstraint(1))
+            .addChild(initLoader());
+          that._mountContent(asyncRoot, direction);
           page.loadingPromise.then(data => {
             cleanupLoader();
             if(!that.isOpen || that.activeTab[1] !== this) return;
-            that.contentRoot.clearChildren().addChild(page.renderer(this, data));
+            asyncRoot
+              .clearChildren()
+              .addChild(
+                createScrollable(
+                  page.renderer(this, data),
+                  that.guiEventLinker(that.onWindowChange.bind(that))
+                )
+              )
           }).catch(error => {
             cleanupLoader();
             if(!that.isOpen || that.activeTab[1] !== this) return;
             const reason = 'error' in error ? error.error : error.toString();
-            that.contentRoot.clearChildren().addChild(createErrorPage(reason).renderer(this));
+            asyncRoot
+              .clearChildren()
+              .addChild(createErrorPage(reason).renderer(this));
           });
         }else{
-          that.contentRoot.clearChildren();
-          that.contentRoot.addChild(page.renderer(this));
+          that._mountContent(
+            createScrollable(
+              page.renderer(this),
+              that.guiEventLinker(that.onWindowChange.bind(that))
+            ),
+            direction
+          )
         }
         return this;
       },
       close(){
-        const oldIndex = that.activeTab[0];
-        const thisIndex = this.getIndex();
+        const [oldIndex, oldTab] = that.activeTab;
         that.tabs = that.tabs.filter(t => t !== this);
-        if(that.tabs.length === 0){
-          that.openPage(createHomePage());
-        }else{
-          if(thisIndex === oldIndex){
-            if(that.tabs[oldIndex]) that.tabs[oldIndex].select();
-            else that.tabs[oldIndex-1].select();
-          }
+        if(oldTab === this){
+          if(that.tabs[oldIndex]) that.tabs[oldIndex].select();
+          else that.tabs[oldIndex-1].select();
         }
         that.reloadHeader();
       }

@@ -8,7 +8,11 @@ declare global {
   type Timeout = {
     cancel(): void;
     fn: () => void;
+    /**
+     * note this only updates once the stopping is successful
+     */
     cancelled: boolean;
+    thread: Thread;
   }
 
   /**
@@ -31,10 +35,13 @@ declare global {
 
   type Tab = {
     page: Page,
+    getIndex(): number;
     getName(): string;
     setName(value: string): this;
     getPinned(): boolean;
     setPinned(value: boolean): this;
+    focused(): void;
+    unfocused(): void;
     componentHandler: TabComponentHandler;
     select(force?: boolean): this;
     close(): void;
