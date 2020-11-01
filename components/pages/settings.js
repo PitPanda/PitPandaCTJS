@@ -147,7 +147,8 @@ export const createSettingsPageContent = (tab) => {
         new Elementa.UIContainer()
           .addChildren([
             createNumberInputSetting('Tab timeout in seconds', 'PageTimeout'),
-            createNumberInputSetting('Tab Transition animation in miliseconds', 'PageTransitionTime'),
+            createNumberInputSetting('Tab transition animation in miliseconds', 'PageTransitionTime'),
+            createToggleableSetting('Remove enchant glint from items', 'RemoveGlint'),
           ])
           .setWidth(new Elementa.RelativeConstraint(1))
           .setHeight(new Elementa.ChildBasedSizeConstraint())

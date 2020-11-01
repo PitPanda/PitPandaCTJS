@@ -3,6 +3,7 @@ import { exitShader, useShader } from '../shaders';
 import { emptyEffect, beforeChildrenDrawEffect, MetaEffect, escapeScissorEffect, conditionalEffect } from '../effects';
 import * as Elementa from 'Elementa/index';
 import { createPadding, createColoredText } from './utility';
+import { getSetting } from '../settings';
 
 const ItemStack = Java.type('net.minecraft.item.ItemStack');
 const MCItem = Java.type('net.minecraft.item.Item');
@@ -54,22 +55,31 @@ export const createItem = item => {
   item.name = fixColorEncoding(item.name);
   if(item.desc) item.desc = item.desc.map(fixColorEncoding);
 
-  if(typeof item.meta === 'string') item.meta = parseInt(item.meta,16) || 0;
-  const mcitemtype = MCItem.func_150899_d(item.id); //getItemById
-  const itemstack = new ItemStack(mcitemtype, item.count, item.meta);
-  const NBTtag = new NBTTagCompound();
-  const NBTtaglore = new NBTTagCompound();
-  NBTtag.func_74782_a('display', NBTtaglore) //setTag
-  const NBTlore = new NBTTagList();
-  item.desc.forEach(line => {
-    NBTlore.func_74742_a(new NBTTagString(line)); //appendTag
-  });
-  NBTtaglore.func_74782_a('Lore', NBTlore) //setTag
-  itemstack.func_77982_d(NBTtag) //setTagCompoung
-  itemstack.func_151001_c(item.name) //setStackDisplayName
-  
+  let itemstack = item.itemstack;
+  if(!itemstack){
+    if(typeof item.meta === 'string') item.meta = parseInt(item.meta,16) || 0;
+    const mcitemtype = MCItem.func_150899_d(item.id); //getItemById
+    itemstack = new ItemStack(mcitemtype, item.count, item.meta);
+    const NBTtag = new NBTTagCompound();
+    const NBTtaglore = new NBTTagCompound();
+    NBTtag.func_74782_a('display', NBTtaglore) //setTag
+    const NBTlore = new NBTTagList();
+    item.desc.forEach(line => {
+      NBTlore.func_74742_a(new NBTTagString(line)); //appendTag
+    });
+    NBTtaglore.func_74782_a('Lore', NBTlore) //setTag
+    itemstack.func_77982_d(NBTtag) //setTagCompoung
+    itemstack.func_151001_c(item.name) //setStackDisplayName
+    if(item.id >= 298 && item.id <= 301) mcitemtype.func_82813_b(itemstack, item.meta) //setColor
+  }
+  if(getSetting('RemoveGlint')) { 
+    const nbt = itemstack.func_77978_p() // getTagCompound
+    if(nbt){
+      nbt.func_82580_o('ench') // removeTag
+      itemstack.func_77982_d(nbt); // setTagCompound
+    }
+  }
   const ctItem = new Item(itemstack);
-  if(item.id >= 298 && item.id <= 301) mcitemtype.func_82813_b(itemstack, item.meta) //setColor
   const lore = createLore(item);
   const drawItemEffect = beforeChildrenDrawEffect(() => {
     if(!item.count) useShader('greyscale');

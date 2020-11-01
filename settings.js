@@ -7,6 +7,7 @@ const defaults = {
   ClickOpenProfiles: true,
   PageTimeout: 120,
   PageTransitionTime: 120,
+  RemoveGlint: false,
 }
 
 /**

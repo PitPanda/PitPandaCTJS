@@ -7,6 +7,8 @@ import { createPlaque } from '../plaque';
 import { createInv } from '../inventory';
 import { createBasicTab } from '../tabs/basic';
 
+const ItemStack = Java.type('net.minecraft.item.ItemStack');
+
 /**
  * @param {Tab} tab 
  * @param {any} data 
@@ -22,7 +24,6 @@ const profileRender = (tab, data) => {
     .setHeight(new Elementa.ChildBasedSizeConstraint())
 
   const face = createProfileDisplay(player)
-
 
   const tradePrompt = [];
   if(isInPit() && World.getAllPlayers().some( p=> 
@@ -42,8 +43,6 @@ const profileRender = (tab, data) => {
   }
 
   const displays = player.displays.map(d=>createPlaque(d));
-
-  
 
   const leftChildren = [
     face,
@@ -69,17 +68,17 @@ const profileRender = (tab, data) => {
     tabbedCard({
       Inventory: new Elementa.UIContainer()
         .addChildren([
-          createInv(player.inventories.main).setX(new Elementa.SiblingConstraint()),
+          createInv(player.nbtInventories.inventory).setX(new Elementa.SiblingConstraint()),
           xSpacer(5),
-          createInv(player.inventories.armor,1).setX(new Elementa.SiblingConstraint()),
+          createInv(player.nbtInventories.armor,1).setX(new Elementa.SiblingConstraint()),
         ]).setWidth(new Elementa.ChildBasedSizeConstraint())
         .setHeight(new Elementa.ChildBasedMaxSizeConstraint()),
-      Enderchest: createInv(player.inventories.enderchest),
+      Enderchest: createInv(player.nbtInventories.enderchest),
       'Stash/Well': new Elementa.UIContainer()
       .addChildren([
-        createInv(player.inventories.stash).setX(new Elementa.SiblingConstraint()),
+        createInv(player.nbtInventories.stash).setX(new Elementa.SiblingConstraint()),
         xSpacer(5),
-        createInv(player.inventories.well,1).setX(new Elementa.SiblingConstraint()),
+        createInv(player.nbtInventories.well,1).setX(new Elementa.SiblingConstraint()),
       ]).setWidth(new Elementa.ChildBasedSizeConstraint())
       .setHeight(new Elementa.ChildBasedMaxSizeConstraint()),
     }, innerRightWidthConstraint),
@@ -88,24 +87,24 @@ const profileRender = (tab, data) => {
         .setHeight(new Elementa.ChildBasedSizeConstraint())
         .setWidth(new Elementa.ChildBasedMaxSizeConstraint())
         .addChildren([
-          createInv(player.inventories.perks, player.inventories.perks.length)
+          createInv(player.builtInventories.perks, player.builtInventories.perks.length)
             .setY(new Elementa.SiblingConstraint())
             .setX(new Elementa.CenterConstraint()),
           ySpacer(7)
             .setY(new Elementa.SiblingConstraint()),
-          createInv(player.inventories.killstreaks, player.inventories.killstreaks.length)
+          createInv(player.builtInventories.killstreaks, player.builtInventories.killstreaks.length)
             .setY(new Elementa.SiblingConstraint())
             .setX(new Elementa.CenterConstraint()),
           ySpacer(7)
             .setY(new Elementa.SiblingConstraint()),
-          createInv(player.inventories.upgrades, player.inventories.upgrades.length)
+          createInv(player.builtInventories.upgrades, player.builtInventories.upgrades.length)
             .setY(new Elementa.SiblingConstraint())
             .setX(new Elementa.CenterConstraint()),
         ]),
-        'Renown Shop': createInv(player.inventories.renownShop, 7),
+        'Renown Shop': createInv(player.builtInventories.renownShop, 7),
     }, innerRightWidthConstraint),
     createCard('General Stats', new Elementa.UIContainer()
-      .addChild(createInv(player.inventories.generalStats, 7).setX(new Elementa.CenterConstraint()))
+      .addChild(createInv(player.builtInventories.generalStats, 7).setX(new Elementa.CenterConstraint()))
       .setWidth(innerRightWidthConstraint)
       .setHeight(new Elementa.ChildBasedSizeConstraint())
     ),
@@ -135,7 +134,41 @@ const profileRender = (tab, data) => {
  */
 export const createProfilePage = tag => ({
   async: true,
-  loadingPromise: fetchFromPitPanda(`/players/${tag}`),
+  loadingPromise: fetchFromPitPanda(`/chattriggers/${tag}`).then(data => {
+    if(!data.success) return data;
+    const player = data.data;
+    Object.entries(player.nbtInventories).forEach(([key, b64]) => {
+      const bytearray = java.util.Base64.getDecoder().decode(b64);
+      const inputstream = new java.io.ByteArrayInputStream(bytearray);                                
+      const nbt = net.minecraft.nbt.CompressedStreamTools.func_74796_a(inputstream); //CompressedStreamTools.readCompressed()                            
+      const items = nbt.func_150295_c("i", 10); //NBTTagCompound.getTagList()
+      const length = items.func_74745_c(); //NBTTagList.tagCount()
+      let processedItems = [];
+      for(let i = 0; i < length; i++){
+        let item = items.func_150305_b(i); //NBTTagList.getCompoundTagAt()
+        if(!item.func_82582_d()) { //NBTTagCompound.hasNoTags()
+          let itemstack = new ItemStack(net.minecraft.init.Blocks.field_150350_a); //Blocks.air
+          itemstack.func_77963_c(item); //ItemStack.readFromNBT()
+          processedItems.push({
+            itemstack,
+            id: 308, //dummy vals
+            desc: [],
+            name: itemstack.func_82833_r(), // ItemStack.getDisplayName()
+            count: itemstack.func_77976_d(), // ItemStack.getMaxStackSize() this is wrong lol
+          })
+        }else{
+          processedItems.push({})
+        }
+      }
+      if(key === 'inventory') processedItems = [...processedItems.slice(9),...processedItems.slice(0,9)]
+      player.nbtInventories[key] = processedItems;
+    });
+    player.nbtInventories.stash = player.nbtInventories.stash ?? [];
+    player.nbtInventories.mysticWellItem = player.nbtInventories.mysticWellItem ?? [{}];
+    player.nbtInventories.mysticWellPants = player.nbtInventories.mysticWellPants ?? [{}];
+    player.nbtInventories.well = [...player.nbtInventories.mysticWellItem,...player.nbtInventories.mysticWellPants];
+    return data;
+  }),
   renderer: profileRender,
   tabComponentHandler: createBasicTab,
   ids: [tag.toLowerCase()],

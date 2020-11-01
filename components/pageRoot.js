@@ -14,8 +14,7 @@ export const createPageRoot = window => {
       .setX(new Elementa.CenterConstraint())
     
     window.addChild(root);
-
-
+    
     const time = 0.5;
     const animation = root.makeAnimation();
     animation.setWidthAnimation(Elementa.Animations.OUT_QUINT, time, (428).pixels())
