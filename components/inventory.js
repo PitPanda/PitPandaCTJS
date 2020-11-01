@@ -50,7 +50,7 @@ export const createItem = item => {
   
   const padded = createPadding(comp, 1).setX(new Elementa.SiblingConstraint())
 
-  if(item === null || item.id === undefined) return padded;
+  if(item === null || (item.id === undefined && !item.itemstack)) return padded;
 
   item.name = fixColorEncoding(item.name);
   if(item.desc) item.desc = item.desc.map(fixColorEncoding);

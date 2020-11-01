@@ -149,10 +149,17 @@ export const createProfilePage = tag => ({
         if(!item.func_82582_d()) { //NBTTagCompound.hasNoTags()
           let itemstack = new ItemStack(net.minecraft.init.Blocks.field_150350_a); //Blocks.air
           itemstack.func_77963_c(item); //ItemStack.readFromNBT()
+          let tag = item.func_74775_l('tag') // getCompoundTag
+          let display = tag.func_74775_l('display') // getCompoundTag
+          let nbtLore = display.func_150295_c('Lore', 8) //getTagList 8 means string
+          let lore = [];
+          for(let l = 0; l < nbtLore.func_74745_c(); l++) {//tagCount
+            lore.push(nbtLore.func_150307_f(l)) //getStringTagAt
+          }
           processedItems.push({
             itemstack,
-            id: 308, //dummy vals
-            desc: [],
+            id: tag.func_74765_d('id'), // getShort
+            desc: lore,
             name: itemstack.func_82833_r(), // ItemStack.getDisplayName()
             count: itemstack.func_77976_d(), // ItemStack.getMaxStackSize() this is wrong lol
           })
@@ -161,6 +168,7 @@ export const createProfilePage = tag => ({
         }
       }
       if(key === 'inventory') processedItems = [...processedItems.slice(9),...processedItems.slice(0,9)]
+      if(key === 'armor') processedItems.reverse();
       player.nbtInventories[key] = processedItems;
     });
     player.nbtInventories.stash = player.nbtInventories.stash ?? [];
