@@ -65,20 +65,22 @@ export const createInput = (opts = {}) => {
   })();
   setState(options.initial);
   const [getFocused, setFocused] = (()=>{
-    let focus = true;
+    let focus = false;
+    let cleanupPrev;
     return [
       () => focus,
       /**
        * @param {boolean} value
        */
       value => {
+        if(cleanupPrev) cleanupPrev();
+        if(value) cleanupPrev = prepListener(browser.gui);
         backgroundEffect.setEnabled(value);
         focus = value;
         return value;
       },
     ]
   })();
-  setFocused(options.alwaysFocused)
   /**
    * @param {Gui} gui 
    */
@@ -100,11 +102,14 @@ export const createInput = (opts = {}) => {
         options.onChange(getState())
       }
     });
-    browser.onWindowChange(() => listener.unregister());
+    const cleanup = () => {
+      if(listener instanceof OnRegularTrigger) listener.unregister();
+    }
+    browser.onWindowChange(cleanup);
+    return cleanup;
   }
-  if(!browser.gui) browser.onWindowChange(() => prepListener(browser.gui))
-  else prepListener(browser.gui);
-  if(!options.alwaysFocused){
+  setFocused(options.alwaysFocused);
+  if(!options.alwaysFocused) {
     addClickEvent(component, () => {
       setFocused(true);
       let exitFocusTrigger;

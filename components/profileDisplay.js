@@ -1,4 +1,4 @@
-import { formatPlaytime, measureString } from '../utils';
+import { formatPlaytime, measureString, registerCommandWithAliases } from '../utils';
 import { createHeadlessCard } from './cards';
 import { createColoredText } from './utility';
 import * as Elementa from 'Elementa/index';

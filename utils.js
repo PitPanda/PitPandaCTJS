@@ -324,16 +324,17 @@ export const onEnterPit = (()=>{
  */
 export const timeout = (fn, ms) => {
   const self = {
-    cancel: () => self.thread.interrupt(),
+    cancel: () => {
+      if(!self.cancelled) self.thread.interrupt();
+      self.cancelled = true;
+    },
     fn,
     cancelled: false,
     thread: new Thread(() => {
       try{
         Thread.sleep(ms);
         fn();
-      }catch(e){
-        self.cancelled = true;
-      }
+      }catch(e){ }
     })
   }
   self.thread.start();
@@ -376,3 +377,36 @@ export const isComponentOnScreen = comp => {
     comp.getRight() <= Renderer.screen.getWidth()
   )
 };
+
+const ItemStack = Java.type('net.minecraft.item.ItemStack');
+const MCItem = Java.type('net.minecraft.item.Item');
+const NBTTagCompound = Java.type('net.minecraft.nbt.NBTTagCompound');
+const NBTTagList = Java.type('net.minecraft.nbt.NBTTagList');
+const NBTTagString = Java.type('net.minecraft.nbt.NBTTagString');
+
+/**
+ * @param {PitPandaItem} item 
+ * @returns {ItemStack}
+ */
+export const createItemStack = item => {
+  if(typeof item.meta === 'string') item.meta = parseInt(item.meta,16) || 0;
+  const mcitemtype = MCItem.func_150899_d(item.id); //getItemById
+  const itemstack = new ItemStack(mcitemtype, item.count, item.meta);
+  const NBTtag = new NBTTagCompound();
+  const NBTtaglore = new NBTTagCompound();
+  NBTtag.func_74782_a('display', NBTtaglore) //setTag
+  const NBTlore = new NBTTagList();
+  item.desc.forEach(line => {
+    NBTlore.func_74742_a(new NBTTagString(line)); //appendTag
+  });
+  NBTtaglore.func_74782_a('Lore', NBTlore) //setTag
+  itemstack.func_77982_d(NBTtag) //setTagCompoung
+  itemstack.func_151001_c(item.name) //setStackDisplayName
+  if(item.id >= 298 && item.id <= 301) mcitemtype.func_82813_b(itemstack, item.meta) //setColor
+  return itemstack;
+}
+
+/**
+ * @param {ItemStack} itemstack 
+ */
+export const givePlayerItemStack = itemstack => Player.getPlayer().field_71071_by.func_70441_a(itemstack)// inventory addItemStackToInventory

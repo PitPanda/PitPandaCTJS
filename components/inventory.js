@@ -1,12 +1,10 @@
-import { fixColorEncoding, isComponentOnScreen, measureString } from '../utils';
+import { addClickEvent, createItemStack, fixColorEncoding, givePlayerItemStack, isComponentOnScreen, measureString, noop, openProfile } from '../utils';
 import { exitShader, useShader } from '../shaders';
 import { emptyEffect, beforeChildrenDrawEffect, MetaEffect, escapeScissorEffect, conditionalEffect } from '../effects';
 import * as Elementa from 'Elementa/index';
 import { createPadding, createColoredText } from './utility';
 import { getSetting } from '../settings';
 
-const ItemStack = Java.type('net.minecraft.item.ItemStack');
-const MCItem = Java.type('net.minecraft.item.Item');
 const Color = Java.type('java.awt.Color');
 
 /**
@@ -34,16 +32,22 @@ export const createInv = (inv, rowSize=9) => {
   return root;
 }
 
-const NBTTagCompound = Java.type('net.minecraft.nbt.NBTTagCompound');
-const NBTTagList = Java.type('net.minecraft.nbt.NBTTagList');
-const NBTTagString = Java.type('net.minecraft.nbt.NBTTagString');
+const defaultItemOptions = {
+  onClick: noop,
+  hoverable: true,
+}
 
 /**
  * warning scissor effect can break the lore
- * @param {any} item object representing the data
+ * @param {PitPandaItem} item object representing the data
+ * @param {{
+ *  onClick: () => void,
+ *  hoverable: boolean,
+ * }}
  * @returns {Elementa.UIContainer}
  */
-export const createItem = item => {
+export const createItem = (item, opts = {}) => {
+  const options = {...defaultItemOptions, ...opts};
   const comp = new Elementa.UIContainer()
     .setWidth((16).pixels())
     .setHeight((16).pixels())
@@ -55,23 +59,8 @@ export const createItem = item => {
   item.name = fixColorEncoding(item.name);
   if(item.desc) item.desc = item.desc.map(fixColorEncoding);
 
-  let itemstack = item.itemstack;
-  if(!itemstack){
-    if(typeof item.meta === 'string') item.meta = parseInt(item.meta,16) || 0;
-    const mcitemtype = MCItem.func_150899_d(item.id); //getItemById
-    itemstack = new ItemStack(mcitemtype, item.count, item.meta);
-    const NBTtag = new NBTTagCompound();
-    const NBTtaglore = new NBTTagCompound();
-    NBTtag.func_74782_a('display', NBTtaglore) //setTag
-    const NBTlore = new NBTTagList();
-    item.desc.forEach(line => {
-      NBTlore.func_74742_a(new NBTTagString(line)); //appendTag
-    });
-    NBTtaglore.func_74782_a('Lore', NBTlore) //setTag
-    itemstack.func_77982_d(NBTtag) //setTagCompoung
-    itemstack.func_151001_c(item.name) //setStackDisplayName
-    if(item.id >= 298 && item.id <= 301) mcitemtype.func_82813_b(itemstack, item.meta) //setColor
-  }
+  const itemstack = item.itemstack ?? createItemStack(item);
+
   if(getSetting('RemoveGlint')) { 
     const nbt = itemstack.func_77978_p() // getTagCompound
     if(nbt){
@@ -80,7 +69,6 @@ export const createItem = item => {
     }
   }
   const ctItem = new Item(itemstack);
-  const lore = createLore(item);
   const drawItemEffect = beforeChildrenDrawEffect(() => {
     if(!item.count) useShader('greyscale');
     ctItem.draw(comp.getLeft(),comp.getTop());
@@ -96,31 +84,40 @@ export const createItem = item => {
     }
   });
   const effects = new MetaEffect(drawItemEffect, itemCountEffect);
-  
-  const drawLoreEffect = beforeChildrenDrawEffect(() => {
-    lore
-      .setX((comp.getRight()+1).pixels())
-      .setY((comp.parent.getTop()-1).pixels())
-    shadowWindow.draw();
-  });
-  const hoverBackEffect = beforeChildrenDrawEffect(() => {
-    Renderer.drawRect(
-      0x28FFFFFF,
-      comp.getLeft(), comp.getTop(),
-      16, 16,
-    );
-  })
-  let shadowWindow = null;
-  comp.onMouseEnter(() => {
-    shadowWindow = new Elementa.Window().addChild(lore)
-    effects.add(drawLoreEffect, hoverBackEffect)
-  });
-  comp.onMouseLeave(() => {
-    shadowWindow && shadowWindow.removeChild(lore);
-    shadowWindow = null;
-    effects.remove(drawLoreEffect, hoverBackEffect)
-  });
+  if(options.hoverable){
+    const lore = createLore(item);
+    const drawLoreEffect = beforeChildrenDrawEffect(() => {
+      lore
+        .setX((comp.getRight()+1).pixels())
+        .setY((comp.parent.getTop()-1).pixels())
+      shadowWindow.draw();
+    });
+    const hoverBackEffect = beforeChildrenDrawEffect(() => {
+      Renderer.drawRect(
+        0x28FFFFFF,
+        comp.getLeft(), comp.getTop(),
+        16, 16,
+      );
+    })
+    let shadowWindow = null;
+    comp.onMouseEnter(() => {
+      shadowWindow = new Elementa.Window().addChild(lore)
+      effects.add(drawLoreEffect, hoverBackEffect)
+    });
+    comp.onMouseLeave(() => {
+      shadowWindow && shadowWindow.removeChild(lore);
+      shadowWindow = null;
+      effects.remove(drawLoreEffect, hoverBackEffect)
+    });
+  }
+
   comp.enableEffect(conditionalEffect(effects, isComponentOnScreen));
+
+  addClickEvent(comp, () => {
+    if(getSetting('DeveloperMode')) givePlayerItemStack(itemstack)
+    options.onClick();
+  });
+  
   return padded;
 }
 

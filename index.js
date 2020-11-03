@@ -7,5 +7,6 @@ import './commands/pitpanda';
 import './commands/other';
 import './features/clickOpenProfile';
 import './features/spawnPlayersVisibility';
+import { getSetting } from './settings';
 
-console.log('----- Loading PitPanda -----')
+if(getSetting('DeveloperMode')) console.log('----- Loading PitPanda -----')

@@ -1,6 +1,6 @@
-import { filterMatchingStart, getPlayerNames, isInPit, nameParam, onEnterPit, openProfile, registerCommandWithAliases } from "../utils";
+import { filterMatchingStart, getPlayerNames, openProfile, registerCommandWithAliases } from "../utils";
 import { browser } from '../browser';
-import { getSetting, setSetting, subscribeToSetting } from '../settings';
+import {setSetting } from '../settings';
 import { createSettingsPage } from '../components/pages/settings';
 
 /**
@@ -18,7 +18,7 @@ const subCommands = {
 }
 
 registerCommandWithAliases(
-  ['pitpanda','view'],
+  ['pitpanda'], // add aliases here
   (first, ...args) => {
     if(!first) return browser.openWindow();
     first = first.toLowerCase();

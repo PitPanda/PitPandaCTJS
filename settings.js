@@ -8,6 +8,7 @@ const defaults = {
   PageTimeout: 120,
   PageTransitionTime: 120,
   RemoveGlint: false,
+  DeveloperMode: false,
 }
 
 /**

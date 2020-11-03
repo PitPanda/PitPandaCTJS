@@ -159,6 +159,7 @@ export const createSettingsPageContent = (tab) => {
           .addChildren([
             createToggleableSetting('Player visibility in spawn', 'SpawnPlayersVisibility'),
             createToggleableSetting('Click on chat messages to open profiles', 'ClickOpenProfiles'),
+            createToggleableSetting('Enable debugging', 'DeveloperMode'),
           ])
           .setWidth(new Elementa.RelativeConstraint(1))
           .setHeight(new Elementa.ChildBasedSizeConstraint())

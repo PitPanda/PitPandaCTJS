@@ -230,6 +230,7 @@ export const browser = {
     const that = this;
     let name = 'New Tab';
     let pinned = false;
+    let focused = false;
     /**
      * @type {Tab}
      */
@@ -255,10 +256,13 @@ export const browser = {
         return that.tabs.indexOf(this);
       },
       focused(){
+        focused = true;
         this.componentHandler.focused();
         if(this.timeout) this.timeout.cancel();
       },
       unfocused(){
+        if(!focused) return;
+        focused = false;
         this.componentHandler.unfocused();
         if(!this.getPinned()) this.timeout = timeout(() => this.close(), getSetting('PageTimeout')*1e3)
       },
@@ -312,12 +316,14 @@ export const browser = {
         return this;
       },
       close(){
+        if(!that.tabs.includes(this)) return console.log('call closed on already closed tab. ids:', this.page.ids.toString());
         const [oldIndex, oldTab] = that.activeTab;
         that.tabs = that.tabs.filter(t => t !== this);
         if(oldTab === this){
           if(that.tabs[oldIndex]) that.tabs[oldIndex].select();
           else that.tabs[oldIndex-1].select();
         }
+        if(this.timeout) this.timeout.cancel();
         that.reloadHeader();
       }
     }

@@ -6,7 +6,9 @@ import { ySpacer, xSpacer, createColoredText } from '../utility';
 import { createPlaque } from '../plaque';
 import { createInv } from '../inventory';
 import { createBasicTab } from '../tabs/basic';
+import { createProgressBar } from '../progressBar';
 
+const Color = Java.type('java.awt.Color');
 const ItemStack = Java.type('net.minecraft.item.ItemStack');
 
 /**
@@ -26,7 +28,7 @@ const profileRender = (tab, data) => {
   const face = createProfileDisplay(player)
 
   const tradePrompt = [];
-  if(isInPit() && World.getAllPlayers().some( p=> 
+  if(player.level >= 60 && isInPit() && World.getAllPlayers().some( p=> 
     p.getUUID().toString().replace(/-/g,'') === player.uuid &&
     p.getUUID().toString() !== Player.getUUID().toString()
   )) {
@@ -49,6 +51,32 @@ const profileRender = (tab, data) => {
     ...tradePrompt,
     ...displays,
     createCard('Status', createStatus(player)),
+    createCard(
+      'Progress',
+      new Elementa.UIContainer()
+        .setWidth((200).pixels())
+        .setHeight(new Elementa.ChildBasedSizeConstraint())
+        .addChildren([
+          createProgressBar(
+            player.xpProgress,
+            'XP Progress',
+            384,
+            new Color(80/256,202/256,202/256),
+          ),
+          createProgressBar(
+            player.goldProgress,
+            'Gold Requirement Progress',
+            266,
+            new Color(217/256,163/256,52/256),
+          ).setY(new Elementa.SiblingConstraint()),
+          createProgressBar(
+            player.renownProgress,
+            'Renown Shop Progress',
+            138,
+            new Color(143/256,88/256,255/256),
+          ).setY(new Elementa.SiblingConstraint()),
+        ])
+    )
   ]
   leftChildren.forEach(c=>{
     c.setY(new Elementa.SiblingConstraint())
@@ -62,7 +90,7 @@ const profileRender = (tab, data) => {
       (8).pixels()
     ))
     .setHeight(new Elementa.ChildBasedSizeConstraint())
-  
+
   const innerRightWidthConstraint = (185).pixels();
   right.addChildren([
     tabbedCard({
@@ -137,7 +165,7 @@ export const createProfilePage = tag => ({
   loadingPromise: fetchFromPitPanda(`/chattriggers/${tag}`).then(data => {
     if(!data.success) return data;
     const player = data.data;
-    Object.entries(player.nbtInventories).forEach(([key, b64]) => {
+    Object.entries(player.nbtInventories).forEach(([key, b64]) => { //code here taken from sbinvsee
       const bytearray = java.util.Base64.getDecoder().decode(b64);
       const inputstream = new java.io.ByteArrayInputStream(bytearray);                                
       const nbt = net.minecraft.nbt.CompressedStreamTools.func_74796_a(inputstream); //CompressedStreamTools.readCompressed()                            
@@ -161,7 +189,7 @@ export const createProfilePage = tag => ({
             id: tag.func_74765_d('id'), // getShort
             desc: lore,
             name: itemstack.func_82833_r(), // ItemStack.getDisplayName()
-            count: itemstack.func_77976_d(), // ItemStack.getMaxStackSize() this is wrong lol
+            count: item.func_74771_c('Count'), //getByte
           })
         }else{
           processedItems.push({})
@@ -171,6 +199,8 @@ export const createProfilePage = tag => ({
       if(key === 'armor') processedItems.reverse();
       player.nbtInventories[key] = processedItems;
     });
+    player.nbtInventories.enderchest = player.nbtInventories.enderchest ?? [];
+    while(player.nbtInventories.enderchest.length < 27) player.nbtInventories.enderchest.push({})
     player.nbtInventories.stash = player.nbtInventories.stash ?? [];
     player.nbtInventories.mysticWellItem = player.nbtInventories.mysticWellItem ?? [{}];
     player.nbtInventories.mysticWellPants = player.nbtInventories.mysticWellPants ?? [{}];

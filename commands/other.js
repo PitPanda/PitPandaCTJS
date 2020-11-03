@@ -1,4 +1,4 @@
-import { interval } from "../utils";
+import { givePlayerItemStack, interval } from "../utils";
 
 register('command', () => {
   console.log(Player.getHeldItem().getRawNBT().toString())
@@ -6,7 +6,7 @@ register('command', () => {
 
 const ItemStack = Java.type('net.minecraft.item.ItemStack');
 register('command', id => {
-  Player.getPlayer().field_71071_by.func_70441_a(  // inventory addItemStackToInventory
+  givePlayerItemStack(
     new ItemStack(
       Java.type('net.minecraft.item.Item').func_150899_d(Number(id)) //getItemById
     )

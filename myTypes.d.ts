@@ -8,9 +8,6 @@ declare global {
   type Timeout = {
     cancel(): void;
     fn: () => void;
-    /**
-     * note this only updates once the stopping is successful
-     */
     cancelled: boolean;
     thread: Thread;
   }
@@ -58,6 +55,15 @@ declare global {
     renderer: (tab: Tab, data?: any) => Elementa.UIComponent;
     tabComponentHandler: (tab: Tab, options: TabComponentHandlerOptions) => TabComponentHandler;
     ids: string[];
+  }
+
+  type PitPandaItem = {
+    id: number,
+    count: number,
+    name: string,
+    desc: string[],
+    itemstack?: ItemStack,
+    meta: number,
   }
 }
 
