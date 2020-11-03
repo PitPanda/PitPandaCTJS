@@ -18,6 +18,7 @@ export const ySpacer = pixels => new Elementa.UIContainer()
   .setY(new Elementa.SiblingConstraint())
 
 /**
+ * Only can be used on children with set size, like no rel sizes
  * @param {Elementa.UIComponent} comp 
  * @param {number} amount 
  * @returns {Elementa.UIContainer}
@@ -29,6 +30,23 @@ export const createPadding = (comp, amount) => {
   const wrapper = new Elementa.UIContainer()
     .setWidth(new Elementa.AdditiveConstraint(new Elementa.ChildBasedSizeConstraint(), (amount*2).pixels()))
     .setHeight(new Elementa.AdditiveConstraint(new Elementa.ChildBasedSizeConstraint(), (amount*2).pixels()))
+    .addChild(comp)
+  return wrapper;
+}
+
+/**
+ * removes amount pixels from the insides of parent
+ * @param {Elementa.UIComponent} comp 
+ * @param {number} amount 
+ * @returns {Elementa.UIContainer}
+ */
+export const createPaddingFromInside = (comp, amount) => {
+  comp
+    .setX(amount.pixels())
+    .setY(amount.pixels())
+  const wrapper = new Elementa.UIContainer()
+    .setWidth(new Elementa.SubtractiveConstraint(new Elementa.RelativeConstraint(1), (amount*2).pixels()))
+    .setHeight(new Elementa.SubtractiveConstraint(new Elementa.RelativeConstraint(1), (amount*2).pixels()))
     .addChild(comp)
   return wrapper;
 }

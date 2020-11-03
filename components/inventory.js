@@ -43,7 +43,7 @@ const defaultItemOptions = {
  * @param {{
  *  onClick: () => void,
  *  hoverable: boolean,
- * }}
+ * }} opts
  * @returns {Elementa.UIContainer}
  */
 export const createItem = (item, opts = {}) => {

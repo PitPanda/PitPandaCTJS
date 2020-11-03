@@ -5,6 +5,7 @@ let currentHeight = Infinity;
 const mapHeights = {
   'The Pit Genesis': 83,
   'The Pit Seasons': 111,
+  'The Pit': 111,
 }
 
 const renderInSpawnTrigger = register('renderEntity', (entity, pos, pticks, event) => {
