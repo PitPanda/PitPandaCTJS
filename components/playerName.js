@@ -1,4 +1,4 @@
-import { addClickEvent, openProfile, nameResolve } from '../utils';
+import { openProfile, nameResolve } from '../utils';
 import * as Elementa from 'Elementa/index';
 
 /**
@@ -6,12 +6,9 @@ import * as Elementa from 'Elementa/index';
  * @returns {Elementa.UIText}
  */
 export const createPlayerName = tag => {
-  const comp = new Elementa.UIText('Loading...');
+  const comp = new Elementa.UIText('Loading...').onMouseClick(() => openProfile(tag));
   const handleErr = () => comp.setText(`§4Error`);
-  addClickEvent(comp, () => openProfile(tag));
-  nameResolve(tag).then(name => {
-    comp.setText(name);
-  }).catch(handleErr);
+  nameResolve(tag).then(name => comp.setText(name)).catch(handleErr);
   return comp;
 }
 

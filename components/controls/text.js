@@ -1,7 +1,7 @@
 import * as Elementa from 'Elementa/index';
 import { theColor } from '../../constants';
 import { fillEffect, MetaEffect } from '../../effects';
-import { addClickEvent, noop, registerOnce } from '../../utils';
+import { noop, registerOnce } from '../../utils';
 
 const Color = Java.type('java.awt.Color');
 
@@ -110,7 +110,7 @@ export const createInput = (opts = {}) => {
   }
   setFocused(options.alwaysFocused);
   if(!options.alwaysFocused) {
-    addClickEvent(component, () => {
+    component.onMouseClick(() => {
       setFocused(true);
       let exitFocusTrigger;
       (function reRegister(){
@@ -120,7 +120,7 @@ export const createInput = (opts = {}) => {
         })
       })();
       browser.onWindowChange(() => exitFocusTrigger.unregister());
-    });
+    })
   }
   return {
     component,

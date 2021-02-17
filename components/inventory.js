@@ -1,11 +1,10 @@
-import { addClickEvent, createItemStack, fixColorEncoding, givePlayerItemStack, isComponentOnScreen, measureString, noop, openProfile } from '../utils';
+import { createItemStack, fixColorEncoding, givePlayerItemStack, isComponentOnScreen, measureString, noop, openProfile } from '../utils';
 import { exitShader, useShader } from '../shaders';
-import { emptyEffect, beforeChildrenDrawEffect, MetaEffect, escapeScissorEffect, conditionalEffect } from '../effects';
+import { beforeChildrenDrawEffect, MetaEffect, conditionalEffect } from '../effects';
 import * as Elementa from 'Elementa/index';
-import { createPadding, createColoredText } from './utility';
+import { createPadding } from './utility';
 import { getSetting } from '../settings';
-
-const Color = Java.type('java.awt.Color');
+import { createLore } from './lore';
 
 /**
  * @param {any[]} inv 
@@ -14,7 +13,7 @@ const Color = Java.type('java.awt.Color');
  */
 export const createInv = (inv, rowSize=9) => {
   const root = new Elementa.UIContainer();
-  const rowPixels = rowSize*18;
+  const rowPixels = rowSize * 18;
   root.setWidth(rowPixels.pixels())
   root.setHeight(new Elementa.ChildBasedSizeConstraint())
   for(let i = 0; i < inv.length/rowSize; i++){
@@ -24,7 +23,7 @@ export const createInv = (inv, rowSize=9) => {
       .setX((0).pixels())
       .setY(new Elementa.SiblingConstraint())
     for(let j = 0; j < rowSize; j++){
-      let item = createItem(inv[i*rowSize+j] || null);
+      let item = createItem(inv[i * rowSize + j] || null);
       row.addChild(item);
     }
     root.addChild(row);
@@ -63,24 +62,24 @@ export const createItem = (item, opts = {}) => {
 
   if(getSetting('RemoveGlint')) { 
     const nbt = itemstack.func_77978_p() // getTagCompound
-    if(nbt){
-      nbt.func_82580_o('ench') // removeTag
+    if(nbt && !nbt.func_150295_c('ench', 10).func_74745_c()){ // getTagList tagCount 10 refers to tag type for compound
+      nbt.func_82580_o('ench') // removeTag 
       itemstack.func_77982_d(nbt); // setTagCompound
     }
   }
   const ctItem = new Item(itemstack);
   const drawItemEffect = beforeChildrenDrawEffect(() => {
     if(!item.count) useShader('greyscale');
-    ctItem.draw(comp.getLeft(),comp.getTop());
+    ctItem.draw(comp.getLeft(), comp.getTop());
     if(!item.count) exitShader();
   })
   const scale = 0.9;
-  const textWidth = measureString(item.count+'')*scale;
+  const textWidth = measureString(item.count + '')*scale;
   const itemCountEffect = beforeChildrenDrawEffect(() => {
-    if(item.count>1) {
-      Renderer.translate(0,0,400)
+    if(item.count > 1) {
+      Renderer.translate(0, 0, 400)
       Renderer.scale(scale)
-      Renderer.drawStringWithShadow(item.count+'',(comp.getRight())/scale-textWidth, (comp.getBottom()-6)/scale)
+      Renderer.drawStringWithShadow(item.count + '', comp.getRight() / scale - textWidth, (comp.getBottom() - 6) / scale)
     }
   });
   const effects = new MetaEffect(drawItemEffect, itemCountEffect);
@@ -101,49 +100,23 @@ export const createItem = (item, opts = {}) => {
     })
     let shadowWindow = null;
     comp.onMouseEnter(() => {
-      shadowWindow = new Elementa.Window().addChild(lore)
-      effects.add(drawLoreEffect, hoverBackEffect)
+      shadowWindow = new Elementa.Window().addChild(lore);
+      effects.add(drawLoreEffect, hoverBackEffect);
     });
     comp.onMouseLeave(() => {
-      shadowWindow && shadowWindow.removeChild(lore);
       shadowWindow = null;
-      effects.remove(drawLoreEffect, hoverBackEffect)
+      effects.remove(drawLoreEffect, hoverBackEffect);
     });
   }
 
-  comp.enableEffect(conditionalEffect(effects, isComponentOnScreen));
-
-  addClickEvent(comp, () => {
-    if(getSetting('DeveloperMode')) givePlayerItemStack(itemstack)
-    options.onClick();
-  });
+  comp
+    .enableEffect(conditionalEffect(effects, isComponentOnScreen))
+    .onMouseClick(() => {
+      if(getSetting('DeveloperMode')) givePlayerItemStack(itemstack)
+      options.onClick();
+    });
   
   return padded;
 }
 
-/**
- * warning scissor effect can break the lore
- * @param {any} item object representing the data
- * @returns {Elementa.UIRoundedRectangle}
- */
-export const createLore = item => {
-  const desc = [item.name, ...item.desc];
-  const root = new Elementa.UIRoundedRectangle(3)
-    .setHeight((4+12*desc.length).pixels())
-    .setColor(new Elementa.ConstantColorConstraint(new Color(0.1,.01,0.1,.95)))
-    .enableEffects([
-      {
-        ...emptyEffect,
-        beforeDraw: () => Renderer.translate(0,0,500),
-        afterDraw: () => Renderer.translate(0,0,-500)
-      },
-      escapeScissorEffect()
-    ])
-  const lines = desc.map((line,i) => {
-    const lineComp = createColoredText(line || ' ',4,12*i+4) //for some reaosn empty string breaks it
-    root.addChild(lineComp);
-    return lineComp;
-  });
-  root.setWidth((Math.max(...lines.map(l=>l.getWidth()))+8).pixels());
-  return root;
-}
+

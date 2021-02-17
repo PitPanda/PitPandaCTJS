@@ -1,4 +1,5 @@
 {
+    "name":"PitPanda",
     "entry":"index.js",
     "requires":["PromiseV2","requestV2","Elementa","CustomTabCompletions"]
 }

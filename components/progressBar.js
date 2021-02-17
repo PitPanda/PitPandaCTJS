@@ -45,7 +45,15 @@ export const createProgressBar = (data, name, id, color) => {
         new Elementa.UIRoundedRectangle(4)
           .setX((16).pixels())
           .setY((2).pixels(true))
-          .setWidth(new Elementa.SubtractiveConstraint(new Elementa.RelativeConstraint(Math.min(data.percent, 1)), (16).pixels()))
+          .setWidth(
+            new Elementa.MinConstraint(
+              new Elementa.SubtractiveConstraint(
+                new Elementa.RelativeConstraint(Math.min(data.percent, 1)),
+                (16).pixels()
+              ),
+              (0).pixels()
+            )
+          )
           .setHeight((9).pixels())
           .setColor(new Elementa.ConstantColorConstraint(color)),
         new Elementa.UIText(name)

@@ -2,50 +2,88 @@ import { ModuleDir } from "./constants";
 
 const settingsPath = `${ModuleDir}/local.json`;
 
-const defaults = {
-  SpawnPlayersVisibility: true,
-  ClickOpenProfiles: true,
-  PageTimeout: 120,
-  PageTransitionTime: 120,
-  RemoveGlint: false,
-  DeveloperMode: false,
+export const settingsSchema = {
+  SpawnPlayersVisibility: {
+    type: 'bool',
+    default: true,
+  },
+  ClickOpenProfiles: {
+    type: 'bool',
+    default: true,
+  },
+  PageTimeout: {
+    type: 'int',
+    default: 120,
+  },
+  PageTransitionTime: {
+    type: 'int',
+    default: 120,
+  },
+  RemoveGlint: {
+    type: 'bool',
+    default: false,
+  },
+  DeveloperMode: {
+    type: 'bool',
+    default: false,
+  },
+  SimpleMysticDescription: {
+    type: 'bool',
+    default: false,
+  },
+  LoadLeaderboardPositions: {
+    type: 'bool',
+    default: true,
+  },
+  ShowHiddenLeaderboards: {
+    type: 'bool',
+    default: false,
+  }
 }
-
 /**
- * @typedef {typeof defaults} Settings
+ * @typedef {{
+ *  type: 'bool',
+ *  default: boolean
+ * } | {
+ *  type: 'int',
+ *  default: number,
+ * }} SettingData
  */
 /**
- * @typedef {keyof Settings} SettingsKey
+ * @typedef {{[T in keyof typeof settingsSchema]: (typeof settingsSchema)[T]['default']}} SettingsTypes
+ */
+/**
+ * @typedef {keyof SettingsTypes} SettingsKey
  */
 
 const raw = FileLib.read(settingsPath);
 
 /**
- * @type {Partial<Settings>}
+ * @type {Partial<SettingsTypes>}
  */
-const settings = raw ? JSON.parse(raw) : {}; // this looks weird, but its so that we dont modify defaults;
+const settings = raw ? JSON.parse(raw) : {}; // this looks weird, but its so that we dont modify settings object;
 
 export const saveSettings = () => FileLib.write(settingsPath, JSON.stringify(settings))
 
 register('gameUnload', saveSettings);
 
 /**
- * @type {Map<SettingsKey, ((state: Settings[SettingsKey])=>void)[]>}
+ * @type {Map<SettingsKey, ((state: SettingsTypes[SettingsKey])=>void)[]>}
  */
 const settingSubs = new Map();
 
 /**
  * @template {SettingsKey} T
  * @param {T} key 
- * @returns {Settings[T]}
+ * @returns {SettingsTypes[T]}
  */
-export const getSetting = key => settings[key] ?? defaults[key];
+export const getSetting = key => settings[key] ?? settingsSchema[key].default;
 
 /**
  * @template {SettingsKey} T
  * @param {T} key 
- * @param {((prev: Settings[T]) => Settings[T]) | Settings[T]} value the value, or a function that takes the current setting and returns the new one
- * @returns {Settings[T]}
+ * @param {((prev: SettingsTypes[T]) => SettingsTypes[T]) | SettingsTypes[T]} value the value, or a function that takes the current setting and returns the new one
+ * @returns {SettingsTypes[T]}
  */
 export const setSetting = (key, value) => {
   if(typeof value === 'function') value = value(getSetting(key));
@@ -55,7 +93,7 @@ export const setSetting = (key, value) => {
   const listeners = settingSubs.get(key);
   if(listeners) listeners.forEach(listener => listener(value)); //alert subs
 
-  if(JSON.stringify(defaults[key]) === JSON.stringify(value)) {
+  if(JSON.stringify(settingsSchema[key].default) === JSON.stringify(value)) {
     settings[key] = undefined; //revert to default, save filespace
     return value;
   }
@@ -68,7 +106,7 @@ export const setSetting = (key, value) => {
  * Returns a function that when called unsubscribes the listener
  * @template {SettingsKey} T
  * @param {T} key 
- * @param {(state: Settings[T]) => void} callback 
+ * @param {(state: SettingsTypes[T]) => void} callback 
  * @returns {{unsubscribe: () => void}}
  */
 export const subscribeToSetting = (key, callback) => {

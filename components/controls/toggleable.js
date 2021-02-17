@@ -1,6 +1,6 @@
 import * as Elementa from 'Elementa/index';
 import { fillEffect, MetaEffect, outlineEffect } from '../../effects';
-import { addClickEvent, noop } from '../../utils';
+import { noop } from '../../utils';
 
 const Color = Java.type('java.awt.Color');
 
@@ -46,6 +46,7 @@ export const createToggleable = opts => {
             .enableEffect(dotEffect)
         )
     )
+    .onMouseClick(() => setState(!getState()))
   const getState = () => enabled;
   /**
    * @param {boolean} state 
@@ -56,9 +57,6 @@ export const createToggleable = opts => {
     options.onChange(enabled);
     return state;
   };
-  addClickEvent(component, () => {
-    setState(!getState())
-  });
   return {
     component,
     getState,

@@ -58,7 +58,7 @@ export const createPaddingFromInside = (comp, amount) => {
  * @param {number} scale 
  * @returns {Elementa.UIText}
  */
-export const createColoredText = (str,x=0,y=0,scale=1) => new Elementa.UIText(fixColorEncoding(str))
+export const createColoredText = (str, x=0, y=0, scale=1) => new Elementa.UIText(fixColorEncoding(str) || ' ')
   .setX(x.pixels())
   .setY(y.pixels())
   .setTextScale(new Elementa.ScaledTextConstraint(scale/9))

@@ -2,7 +2,7 @@ import * as Elementa from 'Elementa/index';
 import { white } from '../../constants';
 import { beforeChildrenDrawEffect, outlineEffect } from '../../effects';
 import { getSetting, saveSettings, setSetting } from '../../settings';
-import { addClickEvent, measureString } from '../../utils';
+import { measureString } from '../../utils';
 import { createInput } from '../controls/text';
 import { createToggleable } from '../controls/toggleable';
 import { createBasicTab } from '../tabs/basic';
@@ -40,6 +40,19 @@ export const createCollapsable = (name, child) => {
       dashSpacer(new Elementa.SubtractiveConstraint(new Elementa.FillConstraint(), (20).pixels()), 5),
       accordianButton,
     ])
+    .onMouseClick(() => {
+      closed = !closed;
+      updated = Date.now();
+      const animation = childContainer.makeAnimation();
+      if(closed) {
+        animation.setHeightAnimation(Elementa.Animations.OUT_EXP, animationTime/1e3, (0).pixels());
+        animation.onComplete(() => childContainer.clearChildren());
+      } else {
+        animation.setHeightAnimation(Elementa.Animations.OUT_EXP, animationTime/1e3, new Elementa.ChildBasedSizeConstraint())
+        childContainer.addChild(child);
+      }
+      animation.begin();
+    })
   const childContainer = new Elementa.UIContainer()
     .setWidth(new Elementa.RelativeConstraint(1))
     .setHeight(new Elementa.ChildBasedSizeConstraint())
@@ -51,19 +64,6 @@ export const createCollapsable = (name, child) => {
     .setX(new Elementa.CenterConstraint())
     .setY(new Elementa.SiblingConstraint())
     .addChild(childContainer)
-  addClickEvent(header, () => {
-    closed = !closed;
-    updated = Date.now();
-    const animation = childContainer.makeAnimation();
-    if(closed) {
-      animation.setHeightAnimation(Elementa.Animations.OUT_EXP, animationTime/1e3, (0).pixels());
-      animation.onComplete(() => childContainer.clearChildren());
-    } else {
-      animation.setHeightAnimation(Elementa.Animations.OUT_EXP, animationTime/1e3, new Elementa.ChildBasedSizeConstraint())
-      childContainer.addChild(child);
-    }
-    animation.begin();
-  })
   return new Elementa.UIContainer()
     .setWidth(new Elementa.RelativeConstraint(1))
     .setHeight(new Elementa.ChildBasedSizeConstraint())
@@ -81,7 +81,7 @@ export const createCollapsable = (name, child) => {
 
 /**
  * @param {string} displayName 
- * @param {FilterKeys<import('../../settings').Settings, boolean>} internalName 
+ * @param {FilterKeys<import('../../settings').SettingsTypes, boolean>} internalName 
  */
 export const createToggleableSetting = (displayName, internalName) => {
   const input = createToggleable({
@@ -105,7 +105,7 @@ export const createToggleableSetting = (displayName, internalName) => {
 
 /**
  * @param {string} displayName 
- * @param {FilterKeys<import('../../settings').Settings, number>} internalName 
+ * @param {FilterKeys<import('../../settings').SettingsTypes, number>} internalName 
  */
 export const createNumberInputSetting = (displayName, internalName) => {
   const input = createInput({
@@ -160,6 +160,7 @@ export const createSettingsPageContent = (tab) => {
             createToggleableSetting('Player visibility in spawn', 'SpawnPlayersVisibility'),
             createToggleableSetting('Click on chat messages to open profiles', 'ClickOpenProfiles'),
             createToggleableSetting('Enable debugging', 'DeveloperMode'),
+            createToggleableSetting('Simple Mystic Description', 'SimpleMysticDescription'),
           ])
           .setWidth(new Elementa.RelativeConstraint(1))
           .setHeight(new Elementa.ChildBasedSizeConstraint())

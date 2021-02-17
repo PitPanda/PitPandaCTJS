@@ -41,6 +41,7 @@ declare module 'Elementa/index'{
     makeAnimation(): AnimatingConstraints;
     onMouseEnter(cb: () => void): this;
     onMouseLeave(cb: () => void): this;
+    onMouseClick(cb: (x: number, y: number, btn: number) => void): this;
   }
 
   class UIConstraints{

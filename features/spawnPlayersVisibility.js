@@ -3,9 +3,11 @@ import { onEnterPit, getMap } from "../utils";
 
 let currentHeight = Infinity;
 const mapHeights = {
-  'The Pit Genesis': 83,
-  'The Pit Seasons': 111,
-  'The Pit': 111,
+  'The Pit Genesis': 85.5,
+  'The Pit Seasons': 113.5,
+  'The Pit': 113.5,
+  'The Pit Abyss': 113.5,
+  'The Pit Castle': 94.5
 }
 
 const renderInSpawnTrigger = register('renderEntity', (entity, pos, pticks, event) => {

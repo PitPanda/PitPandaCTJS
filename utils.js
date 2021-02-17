@@ -54,7 +54,7 @@ export const fetchFromPitPanda = path => request({
  */
 export const formatPlaytime = time => {
   let s = `${time%60}m`;
-  if(time>=60) s = `${Math.floor(time/60)}h ` + s;
+  if(time>=60) s = `${numberWithCommas(Math.floor(time/60))}h ` + s;
   return s;
 }
 
@@ -142,7 +142,8 @@ export const onDragged = (comp, handler) => {
  */
 export const addClickEvent = (comp, handler) => {
   comp.onMouseClick((_0,_1,b) => {
-    if(comp.isHovered()) handler(b);
+    // if(comp.isHovered()) handler(b);
+    handler(b);
   });
   return comp;
 }
@@ -406,7 +407,84 @@ export const createItemStack = item => {
   return itemstack;
 }
 
+const Enchantment = Java.type('net.minecraft.enchantment.Enchantment');
+
+/**
+ * @param {*} itemstack
+ * @returns {PitPandaItem}
+ */
+export const createItemFromItemNBT = item => {
+  if(item.func_82582_d()) return {}; //NBTTagCompound.hasNoTags()
+  const itemstack = new ItemStack(net.minecraft.init.Blocks.field_150350_a); //Blocks.air
+  itemstack.func_77963_c(item); //ItemStack.readFromNBT()
+  const tag = item.func_74775_l('tag') // getCompoundTag
+  const display = tag.func_74775_l('display') // getCompoundTag
+  const nbtLore = display.func_150295_c('Lore', 8) //getTagList 8 means string
+  const enchants = tag.func_150295_c('ench', 10) //getTagList 10 means compound
+  const lore = [];
+  for(let i = 0; i < enchants.func_74745_c(); i++) {//tagCount
+    lore.push(
+      '&7'.addColor() + Enchantment.func_180306_c( // getEnchantmentById 
+        enchants.func_150305_b(i).func_74765_d('id') // getCompoundTagAt getShort
+      ).func_77316_c(// getName
+        enchants.func_150305_b(i).func_74765_d('lvl') // getCompoundTagAt getShort
+      ) 
+    )
+  }
+  for(let l = 0; l < nbtLore.func_74745_c(); l++) {//tagCount
+    lore.push(nbtLore.func_150307_f(l)) //getStringTagAt
+  }
+  return {
+    itemstack,
+    id: tag.func_74765_d('id'), // getShort
+    desc: lore,
+    name: itemstack.func_82833_r(), // ItemStack.getDisplayName()
+    count: item.func_74771_c('Count'), //getByte
+  }
+}
+
 /**
  * @param {ItemStack} itemstack 
  */
 export const givePlayerItemStack = itemstack => Player.getPlayer().field_71071_by.func_70441_a(itemstack)// inventory addItemStackToInventory
+
+export const PitReferencePromise = request({
+  url: `${PitPandaURL}/pitreference`,
+  json: true,
+  headers: {
+      'User-Agent': 'PitPandaMinecraft',
+  },
+})
+
+/**
+ * @param {number} int 
+ */
+export const numToRomanString = int => {
+  let roman = '';
+  roman += 'M'.repeat(int / 1000); int %= 1000;
+  roman += 'CM'.repeat(int / 900); int %= 900;
+  roman += 'D'.repeat(int / 500); int %= 500;
+  roman += 'CD'.repeat(int / 400); int %= 400;
+  roman += 'C'.repeat(int / 100); int %= 100;
+  roman += 'XC'.repeat(int / 90); int %= 90;
+  roman += 'L'.repeat(int / 50); int %= 50;
+  roman += 'XL'.repeat(int / 40); int %= 40;
+  roman += 'X'.repeat(int / 10); int %= 10;
+  roman += 'IX'.repeat(int / 9); int %= 9;
+  roman += 'V'.repeat(int / 5); int %= 5;
+  roman += 'IV'.repeat(int / 4); int %= 4;
+  roman += 'I'.repeat(int);
+  return roman;
+}
+
+/**
+ * Simple check if a tag is username or uuid
+ * @param {string} str
+ */
+export const isUUID = str => str.length > 16;
+
+/**
+ * https://stackoverflow.com/a/2901298
+ * @param {number} x
+ */
+export const numberWithCommas = x => x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");

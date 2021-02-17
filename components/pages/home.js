@@ -1,5 +1,5 @@
 import * as Elementa from 'Elementa/index';
-import { addClickEvent, fetchFromPitPanda, noop, openProfile } from '../../utils';
+import { fetchFromPitPanda, noop, openProfile } from '../../utils';
 import { createErrorPage } from './error';
 import { createProfileDisplay } from '../profileDisplay';
 import { outlineEffect } from '../../effects';
@@ -15,12 +15,9 @@ const createPlayerCol = players => {
     .addChildren(
       players
         .map(
-          p => {
-            const comp = createProfileDisplay(p)
-              .setY(new Elementa.SiblingConstraint());
-            addClickEvent(comp, () => openProfile(p.uuid))
-            return comp;
-          }
+          p => createProfileDisplay(p)
+            .setY(new Elementa.SiblingConstraint())
+            .onMouseClick(() => openProfile(p.uuid))
         )
     )
     .setWidth(new Elementa.ChildBasedMaxSizeConstraint())
@@ -83,10 +80,7 @@ const tabController = (tab, options) => {
         .setColor(new Elementa.ConstantColorConstraint(white)),
       3
     )
-  
-  addClickEvent(component, () => {
-    options.onClick();
-  });
+    .onMouseClick(() => options.onClick())
 
   return {
     component,
@@ -127,28 +121,21 @@ export const createHomePageContent = (tab, data) => {
             .enableEffect(outlineEffect(white, 1))
             .setWidth((150).pixels())
             .setHeight((20).pixels()),
-          (()=>{
-            const comp = new Elementa.UIBlock(theColor)
-              .enableEffect(outlineEffect(white, 1))
-              .setWidth((30).pixels())
-              .setHeight((20).pixels())
-              .setX(
-                new Elementa.AdditiveConstraint(
-                  new Elementa.SiblingConstraint(),
-                  (5).pixels()
-                )
+          new Elementa.UIBlock(theColor)
+            .enableEffect(outlineEffect(white, 1))
+            .setWidth((30).pixels())
+            .setHeight((20).pixels())
+            .setX(
+              new Elementa.AdditiveConstraint(
+                new Elementa.SiblingConstraint(),
+                (5).pixels()
               )
-              .addChild(
-                new Elementa.UIText('GO')
-                  .setX(new Elementa.CenterConstraint())
-                  .setY(new Elementa.CenterConstraint())
-              )
-            addClickEvent(comp, b => {
-              openProfile(input.getState())
-            })
-            return comp;
-          })()
-          
+            )
+            .addChild(
+              new Elementa.UIText('GO')
+                .setX(new Elementa.CenterConstraint())
+                .setY(new Elementa.CenterConstraint())
+            ).onMouseClick(() => openProfile(input.getState()))
         ])
         .setWidth(new Elementa.ChildBasedSizeConstraint())
         .setHeight(new Elementa.ChildBasedMaxSizeConstraint())

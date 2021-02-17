@@ -1,5 +1,5 @@
 import { createPageRoot } from './components/pageRoot';
-import { createLoadingComponent } from './components/loading';
+import { createLoadingTextAnimation } from './components/loadingText';
 import { hostEvents, onGuiClose, timeout } from "./utils";
 import * as Elementa from 'Elementa/index';
 import { Promise } from '../PromiseV2';
@@ -279,7 +279,7 @@ export const browser = {
         const page = this.page;
         if(page.async == true){
           this.setName('Loading');
-          const [initLoader, cleanupLoader] = (page.loadingRenderer || createLoadingComponent)();
+          const [initLoader, cleanupLoader] = (page.loadingRenderer || createLoadingTextAnimation)();
           const asyncRoot = new Elementa.UIContainer()
             .setWidth(new Elementa.RelativeConstraint(1))
             .setHeight(new Elementa.RelativeConstraint(1))

@@ -6,7 +6,7 @@ const maxDots = 4;
 /**
  * @returns {DelicateComponent}
  */
-export const createLoadingComponent = () => {
+export const createLoadingTextAnimation = () => {
   let running = true;
   let dots = 0;
   const textHolder = new Elementa.UIContainer()

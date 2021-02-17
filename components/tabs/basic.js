@@ -1,7 +1,6 @@
 import * as Elementa from 'Elementa/index';
 import { theColor, white } from '../../constants';
 import { backgroundEffect, MetaEffect, outlineEffect } from '../../effects';
-import { addClickEvent } from '../../utils';
 import { createPadding } from '../utility';
 
 const Color = Java.type('java.awt.Color');
@@ -47,11 +46,10 @@ export const createBasicTab = (tab, options) => {
       genNameComp(),
       exitButton,
     ])
-  
-  addClickEvent(tabComponent, () => {
-    if(exitButton.isHovered()) options.onExit();
-    else options.onClick();
-  });
+    .onMouseClick(() => {
+      if(exitButton.isHovered()) options.onExit();
+      else options.onClick();
+    })
 
   return {
     component: createPadding(tabComponent, 4).setX(new Elementa.SiblingConstraint()),

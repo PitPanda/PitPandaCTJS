@@ -1,4 +1,4 @@
-import { formatPlaytime, measureString, registerCommandWithAliases } from '../utils';
+import { formatPlaytime, measureString, numberWithCommas } from '../utils';
 import { createHeadlessCard } from './cards';
 import { createColoredText } from './utility';
 import * as Elementa from 'Elementa/index';
@@ -17,7 +17,7 @@ export const createProfileDisplay = player => {
     .addChild(createFace(player))
     .addChild(createColoredText((player.formattedName || player.name), 53, 2, 1.1*scale))
     .addChild(createColoredText('§7Level: '+(player.formattedLevel || player.level), 53, 14,1.1))
-    .addChild(createColoredText('§7Gold: §6'+(player.currentGold || player.gold)+'g', 53, 26,1.1))
+    .addChild(createColoredText('§7Gold: §6'+(numberWithCommas(player.currentGold || player.gold))+'g', 53, 26,1.1))
     .addChild(createColoredText('§7Played: §f'+formatPlaytime(player.playtime), 53, 38,1.1))
   return createHeadlessCard(root);
 }
