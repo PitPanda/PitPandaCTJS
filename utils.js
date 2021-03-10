@@ -37,16 +37,21 @@ export const fixColorEncoding = (str) => str
 /**
  * @param {string} path 
  */
-export const fetchFromPitPanda = path => request({
-  url: `${PitPandaURL}/api${path}`,
-  json: true,
-  headers: {
-      'User-Agent': 'PitPandaMinecraft',
-  },
-}).then(data => new Promise((resolve, reject) => {
-  if(!data.success) return reject(data.error);
-  resolve(data);
-}))
+export const fetchFromPitPanda = path => {
+  const key = require('./settings').getSetting('PitPandaApiKey');
+  const headers = {
+    'User-Agent': 'PitPandaMinecraft',
+  };
+  if(key) headers['X-API-Key'] = key;
+  return request({
+    url: `${PitPandaURL}/api${path}`,
+    json: true,
+    headers,
+  }).then(data => new Promise((resolve, reject) => {
+    if(!data.success) return reject(data.error);
+    resolve(data);
+  }))
+};
 
 /**
  * ex: 123 -> "2h 3m"
@@ -240,34 +245,6 @@ export const nameResolve = tag => new Promise((resolve, reject) => {
 });
 
 /**
- * this is prone to reject. (rejects undefined)
- * max wait is 5s
- * this will reject outside of pit but it may resolve weird values too
- * @returns {Promise<string>}
- */
-export const getMap = () => new Promise((resolve, reject) => {
-  let timedout = false;
-  setTimeout(() => {
-    timedout = true;
-    reject();
-  }, 5e3);
-  let limit = 5;
-  const trigger = register('chat', (message, event) => {
-    if(timedout) return trigger.unregister();
-    const matches = message.match(/You are currently playing on (.*)/);
-    if(!matches) {
-      limit--;
-      if(!limit) trigger.unregister();
-      return reject();
-    };
-    resolve(matches[1])
-    event.setCanceled(true);
-    trigger.unregister();
-  }).setCriteria("${message}");
-  ChatLib.command('map');
-});
-
-/**
  * @param {string[]} aliases 
  * @param {(...args: string[]) => void} implementation 
  * @param {(...args: string[]) => string[]} completer 
@@ -312,10 +289,65 @@ export const onEnterPit = (()=>{
   /**
    * note runs 1s late to give the scoreboard a chance to update
    * if someone has seriously bad ping this could fail lol
+   * the return value of your callback will be called upon exit
    * @param {() => (undefined | () => void)} enter
    */
   const fn = (enter) => onEnter.push(enter);
   return fn;
+})();
+
+/**
+ * @returns {Promise<'The Pit Genesis' | 'The Pit Seasons' | 'The Pit' | 'The Pit Abyss' | 'The Pit Castle'>}
+ */
+const getMapHelper = () => new Promise((resolve, reject) => {
+  const validMaps = ['The Pit Genesis', 'The Pit Seasons', 'The Pit', 'The Pit Abyss', 'The Pit Castle'];
+  let timedout = false;
+  setTimeout(() => {
+    timedout = true;
+    reject();
+  }, 5e3);
+  let limit = 5;
+  const trigger = register('chat', (message, event) => {
+    if(timedout) return trigger.unregister();
+    const matches = message.match(/You are currently playing on (.*)/);
+    if(!matches) {
+      limit--;
+      if(!limit) trigger.unregister();
+      return reject();
+    };
+    const map = matches[1];
+    if(validMaps.includes(map)) resolve(map);
+    else reject();
+    event.setCanceled(true);
+    trigger.unregister();
+  }).setCriteria("${message}");
+  ChatLib.command('map');
+});
+
+export const getMap = (() => {
+  let currentPromise = null;
+
+  onEnterPit(() => {
+    currentPromise = null;
+    return () => currentPromise = null;
+  })
+
+  return /** @returns {ReturnType<getMapHelper>} */ () => {
+    if(!currentPromise) currentPromise = getMapHelper();
+    return currentPromise;
+  }
+})();
+
+export const getCachedMap = (()=>{
+  /** @type {'The Pit Genesis' | 'The Pit Seasons' | 'The Pit' | 'The Pit Abyss' | 'The Pit Castle' | 'unknown'} */
+  let currentMap = 'unknown';
+  onEnterPit(() => {
+    getMap()
+      .then(map => currentMap = map)
+      .catch(() => currentMap = 'unknown');
+    () => currentMap = 'unknown';
+  })
+  return () => currentMap;
 })();
 
 /**

@@ -7,11 +7,16 @@ const mapHeights = {
   'The Pit Seasons': 113.5,
   'The Pit': 113.5,
   'The Pit Abyss': 113.5,
-  'The Pit Castle': 94.5
+  'The Pit Castle': 94.5,
 }
 
 const renderInSpawnTrigger = register('renderEntity', (entity, pos, pticks, event) => {
-  if(entity.getY() > currentHeight && entity.getClassName().equals('EntityOtherPlayerMP')) event.setCanceled(true);
+  if(
+    entity.getClassName().equals('EntityOtherPlayerMP') &&
+    entity.getY() > currentHeight && 
+    Math.abs(entity.getX()) < 20 && 
+    Math.abs(entity.getZ()) < 20
+  ) event.setCanceled(true);
 }).unregister();
 
 onEnterPit(() => {

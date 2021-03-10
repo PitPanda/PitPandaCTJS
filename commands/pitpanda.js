@@ -2,6 +2,7 @@ import { filterMatchingStart, getPlayerNames, openProfile, registerCommandWithAl
 import { browser } from '../browser';
 import { getSetting, setSetting, settingsSchema } from '../settings';
 import { createSettingsPage } from '../components/pages/settings';
+import { addCustomCompletion } from "../../CustomTabCompletions";
 
 /**
  * @typedef {Object} SubCommand
@@ -31,6 +32,11 @@ const subCommands = {
         case 'int': {
           const value = parseInt(args[1]);
           if(Number.isNaN(value)) return ChatLib.chat(`Invalid value! Must be a number.`);
+          setSetting(args[0], value);
+          return ChatLib.chat(`Setting "${args[0]}" is now set to ${value}.`);
+        }
+        case 'string': {
+          const value = args.slice(1).join(' ');
           setSetting(args[0], value);
           return ChatLib.chat(`Setting "${args[0]}" is now set to ${value}.`);
         }

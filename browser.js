@@ -300,6 +300,7 @@ export const browser = {
             cleanupLoader();
             if(!that.isOpen || that.activeTab[1] !== this) return;
             const reason = 'error' in error ? error.error : error.toString();
+            console.log(error);
             asyncRoot
               .clearChildren()
               .addChild(createErrorPage(reason).renderer(this));
@@ -322,9 +323,10 @@ export const browser = {
         if(oldTab === this){
           if(that.tabs[oldIndex]) that.tabs[oldIndex].select();
           else that.tabs[oldIndex-1].select();
-        }
+        } else that.activeTab[0] = that.tabs.indexOf(oldTab);
         if(this.timeout) this.timeout.cancel();
         that.reloadHeader();
+        
       }
     }
     tab.componentHandler = page.tabComponentHandler(tab, {

@@ -38,7 +38,11 @@ export const settingsSchema = {
   ShowHiddenLeaderboards: {
     type: 'bool',
     default: false,
-  }
+  },
+  PitPandaApiKey: {
+    type: 'string',
+    default: '',
+  },
 }
 /**
  * @typedef {{
@@ -47,6 +51,9 @@ export const settingsSchema = {
  * } | {
  *  type: 'int',
  *  default: number,
+ * } | {
+ *  type: 'string',
+ *  default: string
  * }} SettingData
  */
 /**

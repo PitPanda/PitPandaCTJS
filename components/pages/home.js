@@ -47,7 +47,7 @@ const subtitles = [
   'Advanced Remote Administration Control',
   'Advanced Shark Machine',
   'Totally not a rat',
-]
+];
 
 /**
  * @returns {Page}
