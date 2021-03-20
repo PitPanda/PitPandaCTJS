@@ -1,5 +1,6 @@
 {
     "name":"PitPanda",
     "entry":"index.js",
-    "requires":["PromiseV2","requestV2","Elementa","CustomTabCompletions"]
+    "requires":["PromiseV2","requestV2","Elementa","CommandManager"],
+    "version": "1.0.3"
 }

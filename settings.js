@@ -39,10 +39,6 @@ export const settingsSchema = {
     type: 'bool',
     default: false,
   },
-  PitPandaApiKey: {
-    type: 'string',
-    default: '',
-  },
 }
 /**
  * @typedef {{

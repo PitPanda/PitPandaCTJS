@@ -2,9 +2,9 @@ import * as Elementa from 'Elementa/index';
 import { request } from "../requestV2";
 import { Promise } from '../PromiseV2';
 import { PitPandaURL } from './constants';
-import { addCustomCompletion } from '../CustomTabCompletions';
 
 const Color = Java.type('java.awt.Color');
+const File = Java.type('java.io.File');
 
 /**
  * @type {import('./browser')['browser']}
@@ -38,7 +38,12 @@ export const fixColorEncoding = (str) => str
  * @param {string} path 
  */
 export const fetchFromPitPanda = path => {
-  const key = require('./settings').getSetting('PitPandaApiKey');
+  let key;
+  if(new File(`${Config.modulesFolder}/PitPandaApiKeyManager`).exists()){
+    /** @type {import('../HypixelApiKeyManager')} */
+    const keymanager = require('../PitPandaApiKeyManager');
+    key = keymanager.getKey('PitPanda')
+  }
   const headers = {
     'User-Agent': 'PitPandaMinecraft',
   };
@@ -245,18 +250,6 @@ export const nameResolve = tag => new Promise((resolve, reject) => {
 });
 
 /**
- * @param {string[]} aliases 
- * @param {(...args: string[]) => void} implementation 
- * @param {(...args: string[]) => string[]} completer 
- */
-export const registerCommandWithAliases = (aliases, implementation, completer) => {
-  for(let alias of aliases){
-    let cmd = register('command', implementation).setName(alias);
-    if(completer) addCustomCompletion(cmd, completer);
-  }
-}
-
-/**
  * @returns {boolean}
  */
 export const isInPit = () => Scoreboard.getTitle().removeFormatting().equals('THE HYPIXEL PIT');
@@ -375,6 +368,7 @@ export const timeout = (fn, ms) => {
 }
 
 /**
+ * Note: the callback is called immediately.
  * @param {(cancel: Timeout) => void} fn 
  * @param {number} ms 
  * @returns {Timeout}
@@ -387,8 +381,8 @@ export const interval = (fn, ms) => {
     thread: new Thread(() => {
       try {
         while(true){
-          Thread.sleep(ms);
           fn(self);
+          Thread.sleep(ms);
         }
       }catch(e){
         self.cancelled = true;
